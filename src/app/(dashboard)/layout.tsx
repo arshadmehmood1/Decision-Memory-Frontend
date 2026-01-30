@@ -30,7 +30,7 @@ export default function DashboardLayout({
 
     return (
         <div className="h-screen overflow-y-auto bg-[#0d1117] font-sans text-white selection:bg-blue-500/30">
-            {mounted && isAuthReady && (currentUser ? (workspaces.length > 0 ? <Navbar /> : <div className="h-16 flex items-center px-6 animate-pulse bg-white/5 border-b border-white/5" />) : <MarketingNavbar />)}
+            {mounted && isAuthReady && (currentUser ? <Navbar /> : <MarketingNavbar />)}
             <OnboardingGuide />
 
             {/* Main Content Area - Full Width */}
