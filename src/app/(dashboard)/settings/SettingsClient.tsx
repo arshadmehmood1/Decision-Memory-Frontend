@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { useStore } from '@/lib/store';
+import { Switch } from '@/components/ui/Switch';
 
 const TABS = [
     { id: 'profile', title: 'Profile', icon: Users },
@@ -120,6 +121,79 @@ export default function SettingsClient() {
                                             <Save size={20} />Update Profile
                                         </Button>
                                     </CardFooter>
+                                </Card>
+                            )}
+
+                            {activeTab === 'workspace' && (
+                                <Card className="rounded-[2.5rem] border border-white/5 shadow-premium overflow-hidden bg-white/5">
+                                    <CardHeader className="border-b border-white/5 p-10">
+                                        <CardTitle className="text-2xl font-black text-white">Workspace Configuration</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="p-8 space-y-8">
+                                        <div className="space-y-6">
+                                            <Input
+                                                label="Workspace Name"
+                                                value={wsName}
+                                                onChange={(e) => setWsName(e.target.value)}
+                                                placeholder="Enter workspace name"
+                                            />
+                                            <div className="p-6 rounded-2xl bg-white/5 border border-white/5">
+                                                <h4 className="text-sm font-bold text-white mb-2">Workspace Identification</h4>
+                                                <p className="text-xs text-gray-400 font-medium">Unique ID: <span className="font-mono text-primary">{currentWorkspaceId}</span></p>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                    <CardFooter className="bg-white/5 p-10 flex justify-end border-t border-white/5">
+                                        <Button onClick={handleSaveWorkspace} isLoading={isLoading} className="rounded-full px-10 h-14 shadow-glow gap-3 font-black uppercase tracking-widest text-xs">
+                                            <Save size={20} />Save Changes
+                                        </Button>
+                                    </CardFooter>
+                                </Card>
+                            )}
+
+                            {activeTab === 'notifications' && (
+                                <Card className="rounded-[2.5rem] border border-white/5 shadow-premium overflow-hidden bg-white/5">
+                                    <CardHeader className="border-b border-white/5 p-10">
+                                        <CardTitle className="text-2xl font-black text-white">Neural Notifications</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="p-8 space-y-6">
+                                        {[
+                                            { title: 'Decision Alerts', desc: 'Get notified when a decision reaches its review deadline.' },
+                                            { title: 'AI Insights', desc: 'Receive neural analysis alerts for your workspaces.' },
+                                            { title: 'Collaborator Activity', desc: 'Updates when team members add comments or traces.' },
+                                            { title: 'Billing & Quota', desc: 'Stay informed about your plan usage and neural credits.' }
+                                        ].map((item, i) => (
+                                            <div key={i} className="flex items-center justify-between p-6 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition-colors">
+                                                <div className="space-y-1">
+                                                    <h4 className="text-sm font-bold text-white">{item.title}</h4>
+                                                    <p className="text-xs text-gray-500">{item.desc}</p>
+                                                </div>
+                                                <Switch defaultChecked />
+                                            </div>
+                                        ))}
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {activeTab === 'security' && (
+                                <Card className="rounded-[2.5rem] border border-white/5 shadow-premium overflow-hidden bg-white/5">
+                                    <CardHeader className="border-b border-white/5 p-10">
+                                        <CardTitle className="text-2xl font-black text-white">Account Security</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="p-8 space-y-8">
+                                        <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
+                                            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-2">
+                                                <Shield size={32} />
+                                            </div>
+                                            <h3 className="text-xl font-black text-white">Identity Managed by Clerk</h3>
+                                            <p className="text-sm text-gray-500 max-w-md mx-auto">
+                                                Password management, 2FA, and session control are securely handled via our neural identity provider.
+                                            </p>
+                                            <Button variant="outline" className="rounded-xl mt-4 border-white/10 bg-white/5 text-white hover:bg-white/10">
+                                                Manage Identity Settings
+                                            </Button>
+                                        </div>
+                                    </CardContent>
                                 </Card>
                             )}
 
