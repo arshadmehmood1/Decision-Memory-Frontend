@@ -79,7 +79,7 @@ export default function SettingsClient() {
     return (
         <div className="space-y-8 max-w-[1600px] mx-auto pb-20">
             <div className="flex flex-col gap-1">
-                <h2 className="text-4xl font-black tracking-tight text-white">Settings</h2>
+                <h2 className="text-4xl font-black tracking-tight text-white">Settings <span className="text-[10px] text-primary">v1.1</span></h2>
                 <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px]">Manage your personal account and shared workspace.</p>
             </div>
 
@@ -158,17 +158,17 @@ export default function SettingsClient() {
                                     </CardHeader>
                                     <CardContent className="p-8 space-y-6">
                                         {[
-                                            { title: 'Decision Alerts', desc: 'Get notified when a decision reaches its review deadline.' },
-                                            { title: 'AI Insights', desc: 'Receive neural analysis alerts for your workspaces.' },
-                                            { title: 'Collaborator Activity', desc: 'Updates when team members add comments or traces.' },
-                                            { title: 'Billing & Quota', desc: 'Stay informed about your plan usage and neural credits.' }
+                                            { id: 'alerts', title: 'Decision Alerts', desc: 'Get notified when a decision reaches its review deadline.' },
+                                            { id: 'insights', title: 'AI Insights', desc: 'Receive neural analysis alerts for your workspaces.' },
+                                            { id: 'collaborator', title: 'Collaborator Activity', desc: 'Updates when team members add comments or traces.' },
+                                            { id: 'billing', title: 'Billing & Quota', desc: 'Stay informed about your plan usage and neural credits.' }
                                         ].map((item, i) => (
-                                            <div key={i} className="flex items-center justify-between p-6 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition-colors">
+                                            <div key={item.id} className="flex items-center justify-between p-6 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition-colors">
                                                 <div className="space-y-1">
                                                     <h4 className="text-sm font-bold text-white">{item.title}</h4>
                                                     <p className="text-xs text-gray-500">{item.desc}</p>
                                                 </div>
-                                                <Switch defaultChecked />
+                                                <Switch checked={true} onCheckedChange={() => { }} />
                                             </div>
                                         ))}
                                     </CardContent>
