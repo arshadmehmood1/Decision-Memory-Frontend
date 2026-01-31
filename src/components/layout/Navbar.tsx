@@ -78,7 +78,7 @@ export function Navbar() {
     }, []);
 
     return (
-        <header className="h-16 bg-black/40 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-6 shrink-0 z-50 sticky top-0 w-full text-[#c9d1d9]">
+        <header className="h-16 bg-black/40 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-4 md:px-6 shrink-0 z-50 sticky top-0 w-full text-[#c9d1d9]">
             {/* Left: Logo & Nav */}
             <div className="flex items-center gap-4">
                 <div className="relative">
@@ -206,7 +206,46 @@ export function Navbar() {
                                     </div>
 
                                     {/* Recent Activity Section */}
-                                    <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                                    <div className="flex-1 overflow-y-auto p-6 space-y-8">
+                                        {/* Mobile Main Nav (Visible only on small screens) */}
+                                        <div className="md:hidden space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest">Navigation</span>
+                                            </div>
+                                            <div className="grid grid-cols-1 gap-1">
+                                                {navItems.map((item) => {
+                                                    const isActive = pathname === item.href;
+                                                    return (
+                                                        <Link
+                                                            key={item.href}
+                                                            href={item.href}
+                                                            onClick={() => setIsContextOpen(false)}
+                                                            className={cn(
+                                                                "flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent",
+                                                                isActive ? "bg-primary/10 text-white border-primary/20" : "text-[#c9d1d9] hover:bg-white/5"
+                                                            )}
+                                                        >
+                                                            <item.icon size={18} className={isActive ? "text-primary" : "text-[#8b949e]"} />
+                                                            <span className="text-sm font-bold">{item.label}</span>
+                                                        </Link>
+                                                    );
+                                                })}
+                                                {currentUser?.role === 'ADMIN' && (
+                                                    <Link
+                                                        href="/admin"
+                                                        onClick={() => setIsContextOpen(false)}
+                                                        className={cn(
+                                                            "flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent",
+                                                            pathname.startsWith('/admin') ? "bg-amber-400/10 text-amber-300 border-amber-400/20" : "text-amber-400 hover:bg-amber-400/5"
+                                                        )}
+                                                    >
+                                                        <Shield size={18} />
+                                                        <span className="text-sm font-bold">Admin Panel</span>
+                                                    </Link>
+                                                )}
+                                            </div>
+                                        </div>
+
                                         <div className="space-y-4">
                                             <div className="flex items-center justify-between">
                                                 <span className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest">Recent Activity</span>
@@ -300,7 +339,7 @@ export function Navbar() {
             </div>
 
             {/* Right: Search & Profile */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4">
 
 
 

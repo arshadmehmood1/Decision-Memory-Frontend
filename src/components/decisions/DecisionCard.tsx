@@ -55,7 +55,7 @@ export function DecisionCard({ decision }: DecisionCardProps) {
 
             <Link href={`/decision/${decision.id}`}>
                 <div className={cn(
-                    "group relative z-10 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between p-8 rounded-[2rem] border transition-all duration-500 overflow-hidden",
+                    "group relative z-10 flex flex-col md:flex-row gap-6 md:gap-4 items-start md:items-center justify-between p-5 sm:p-8 rounded-2xl sm:rounded-[2rem] border transition-all duration-500 overflow-hidden",
                     isCritical
                         ? "bg-black/60 border-red-500/30 shadow-[0_0_40px_rgba(239,68,68,0.1)] backdrop-blur-2xl"
                         : "bg-white/[0.03] border-white/5 hover:border-white/20 hover:bg-white/[0.06] backdrop-blur-md"
@@ -64,60 +64,62 @@ export function DecisionCard({ decision }: DecisionCardProps) {
                     <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-2xl" />
 
                     <div className="flex-1 space-y-4">
-                        <div className="flex items-center flex-wrap gap-3">
-                            <Badge variant="info" className="h-7 px-3 text-[10px] font-black tracking-widest uppercase bg-blue-500/10 border-blue-500/20 text-blue-400">
+                        <div className="flex items-center flex-wrap gap-2 sm:gap-3">
+                            <Badge variant="info" className="h-6 sm:h-7 px-2 sm:px-3 text-[9px] sm:text-[10px] font-black tracking-widest uppercase bg-blue-500/10 border-blue-500/20 text-blue-400">
                                 {decision.category}
                             </Badge>
-                            <Badge variant={statusVariants[decision.status] || 'default'} className="h-7 px-3 text-[10px] font-black uppercase tracking-widest bg-opacity-10 border-opacity-20 shadow-inner">
+                            <Badge variant={statusVariants[decision.status] || 'default'} className="h-6 sm:h-7 px-2 sm:px-3 text-[9px] sm:text-[10px] font-black uppercase tracking-widest bg-opacity-10 border-opacity-20 shadow-inner">
                                 {decision.status}
                             </Badge>
                             {isCritical && (
-                                <Badge className="h-7 px-3 text-[10px] font-black uppercase tracking-widest bg-red-500 text-white shadow-glow animate-pulse">
-                                    Neural High
+                                <Badge className="h-6 sm:h-7 px-2 sm:px-3 text-[9px] sm:text-[10px] font-black uppercase tracking-widest bg-red-500 text-white shadow-glow animate-pulse">
+                                    Risk
                                 </Badge>
                             )}
-                            <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-white/20" />
+                            <span className="text-[9px] sm:text-[10px] font-black text-gray-500 uppercase tracking-[0.1em] sm:tracking-[0.2em] flex items-center gap-1.5 sm:gap-2">
+                                <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-white/20" />
                                 {formatDate(decision.madeOn)}
                             </span>
                         </div>
 
-                        <div className="space-y-2">
-                            <h4 className="text-2xl font-black text-white group-hover:text-primary transition-colors leading-tight tracking-tight">
+                        <div className="space-y-1.5 sm:space-y-2">
+                            <h4 className="text-xl sm:text-2xl font-black text-white group-hover:text-primary transition-colors leading-tight tracking-tight">
                                 {decision.title}
                             </h4>
                             {(decision as any).neuralInsight && (
-                                <p className="text-xs font-bold text-red-400/80 italic line-clamp-1 max-w-2xl bg-red-500/5 px-2 py-1 rounded-lg border border-red-500/10">
+                                <p className="text-[10px] sm:text-xs font-bold text-red-400/80 italic line-clamp-1 max-w-2xl bg-red-500/5 px-2 py-1 rounded-lg border border-red-500/10">
                                     {(decision as any).neuralInsight}
                                 </p>
                             )}
                             {decision.decision && (
-                                <p className="text-sm text-gray-400 font-medium line-clamp-1 max-w-4xl opacity-80 group-hover:opacity-100 transition-opacity">
+                                <p className="text-xs sm:text-sm text-gray-400 font-medium line-clamp-1 max-w-4xl opacity-80 group-hover:opacity-100 transition-opacity">
                                     {decision.decision}
                                 </p>
                             )}
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-8 self-end md:self-center pl-6 md:pl-0 md:border-l md:border-white/10 md:h-16">
-                        <div className="flex items-center gap-4">
+                    <div className="flex items-center justify-between md:justify-end gap-4 sm:gap-8 w-full md:w-auto pt-4 md:pt-0 md:pl-6 md:border-l md:border-white/10 md:h-16">
+                        <div className="flex items-center gap-3 sm:gap-4">
                             <div className={cn(
-                                "w-10 h-10 rounded-2xl flex items-center justify-center text-xs text-white font-black shadow-2xl transition-transform group-hover:scale-110",
+                                "w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-[10px] sm:text-xs text-white font-black shadow-2xl transition-transform group-hover:scale-110",
                                 isCritical ? "bg-red-500/20 border border-red-500/30" : "bg-white/5 border border-white/10"
                             )} title={isAnonymous ? 'Anonymous' : decision.madeBy}>
-                                {isAnonymous ? <EyeOff size={18} className="text-gray-500" /> : decision.madeBy.charAt(0)}
+                                {isAnonymous ? <EyeOff size={16} className="text-gray-500" /> : decision.madeBy.charAt(0)}
                             </div>
-                            <div className="hidden lg:block">
-                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Logged By</span>
-                                <span className="text-xs font-bold text-white whitespace-nowrap">{isAnonymous ? 'Anonymous' : decision.madeBy}</span>
+                            <div className="block">
+                                <span className="text-[9px] sm:text-[10px] font-black text-gray-400 uppercase tracking-widest block">Logged By</span>
+                                <span className="text-[10px] sm:text-xs font-bold text-white whitespace-nowrap">{isAnonymous ? 'Anonymous' : decision.madeBy}</span>
                             </div>
                         </div>
-                        <div className="flex flex-col items-center gap-1 group/msg">
-                            <MessageSquare size={20} className="text-gray-500 group-hover/msg:text-primary transition-colors" />
-                            <span className="text-[10px] font-black text-gray-600">{decision.comments?.length || 0}</span>
-                        </div>
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white/5 group-hover:bg-primary group-hover:text-white transition-all duration-300">
-                            <ChevronRight size={20} strokeWidth={3} />
+                        <div className="flex items-center gap-4 sm:gap-6">
+                            <div className="flex flex-col items-center gap-0.5 group/msg">
+                                <MessageSquare size={18} className="text-gray-500 group-hover/msg:text-primary transition-colors" />
+                                <span className="text-[9px] font-black text-gray-600">{decision.comments?.length || 0}</span>
+                            </div>
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-white/5 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                                <ChevronRight size={18} strokeWidth={3} className="sm:size-5" />
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -42,7 +42,7 @@ export default function DashboardLayout({
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                         transition={{ duration: 0.4 }}
-                        className="pt-8 pb-8 px-8 relative z-10"
+                        className="pt-8 pb-8 px-4 md:px-8 relative z-10"
                     >
                         <div className="max-w-[1600px] mx-auto">
                             <ErrorBoundary>

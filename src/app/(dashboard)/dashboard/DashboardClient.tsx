@@ -69,34 +69,34 @@ export default function DashboardClient() {
         <div className="space-y-12 pb-24 max-w-[1600px] mx-auto">
             {/* Header Section */}
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
-                <div className="py-4">
-                    <h2 className="text-5xl font-black tracking-tighter text-white">Home</h2>
-                    <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] mt-2">Welcome to your workspace</p>
+                <div className="py-2 sm:py-4">
+                    <h2 className="text-3xl sm:text-5xl font-black tracking-tighter text-white uppercase italic">Home</h2>
+                    <p className="text-gray-400 font-black uppercase tracking-[0.2em] text-[9px] mt-1">Operational Workspace / Trace Mode</p>
                 </div>
-                <Link href="/decision/new">
-                    <Button className="h-14 rounded-2xl px-8 shadow-premium shadow-blue-500/10 hover:scale-105 transition-all text-lg gap-3">
-                        <Plus size={20} strokeWidth={3} />
+                <Link href="/decision/new" className="w-full sm:w-auto">
+                    <Button className="w-full h-12 sm:h-14 rounded-xl sm:rounded-2xl px-8 shadow-premium shadow-blue-500/10 hover:scale-[1.02] active:scale-95 transition-all text-sm sm:text-lg gap-3">
+                        <Plus size={18} strokeWidth={3} />
                         New Decision
                     </Button>
                 </Link>
             </div>
 
             {/* Quick Stats Summary Bar */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {stats.map((stat, idx) => (
                     <motion.div
                         key={idx}
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 15 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.1 }}
                     >
-                        <Card className="p-6 border border-white/5 bg-white/5 flex items-center justify-between group rounded-2xl hover:bg-white/10 transition-all">
-                            <div className="space-y-1">
-                                <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{stat.label}</div>
-                                <div className="text-2xl font-black text-white tracking-tight">{stat.value}</div>
+                        <Card className="p-4 sm:p-5 border border-white/5 bg-white/5 flex items-center justify-between group rounded-xl sm:rounded-2xl hover:bg-white/10 transition-all">
+                            <div className="space-y-0.5">
+                                <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest">{stat.label}</div>
+                                <div className="text-xl sm:text-2xl font-black text-white tracking-tight">{stat.value}</div>
                             </div>
-                            <div className={cn("p-3 rounded-xl bg-white/5", stat.color)}>
-                                <stat.icon size={20} />
+                            <div className={cn("p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/5", stat.color)}>
+                                <stat.icon size={18} className="sm:size-5" />
                             </div>
                         </Card>
                     </motion.div>
@@ -116,36 +116,36 @@ export default function DashboardClient() {
                     >
                         <Card className="bg-blue-600 border-none p-6 md:p-10 relative overflow-hidden group shadow-glow">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full translate-x-1/2 -translate-y-1/2 blur-3xl group-hover:bg-white/20 transition-all duration-700" />
-                            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-10">
-                                <div className="space-y-6 max-w-xl">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center shadow-inner">
-                                            <Sparkles size={28} />
+                            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6 lg:gap-10">
+                                <div className="space-y-4 lg:space-y-6 max-w-xl">
+                                    <div className="flex items-center gap-3 sm:gap-4">
+                                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-white/20 text-white flex items-center justify-center shadow-inner">
+                                            <Sparkles size={24} className="sm:size-7" />
                                         </div>
-                                        <h3 className="text-2xl font-black text-white tracking-tight">Level Up Your Brain</h3>
+                                        <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">Level Up Your Brain</h3>
                                     </div>
-                                    <p className="text-blue-50 font-bold text-lg leading-relaxed">To unlock advanced AI Trend Analysis and Blindspot detection, log at least 5 strategic decisions.</p>
-                                    <div className="flex items-center gap-6 pt-2">
-                                        <div className="flex-1 h-3 bg-black/20 rounded-full overflow-hidden border border-white/5">
+                                    <p className="text-blue-50 font-bold text-base sm:text-lg leading-relaxed">To unlock advanced AI Trend Analysis, log at least 5 strategic decisions.</p>
+                                    <div className="flex items-center gap-4 sm:gap-6 pt-1">
+                                        <div className="flex-1 h-2 sm:h-3 bg-black/20 rounded-full overflow-hidden border border-white/5">
                                             <div
                                                 className="h-full bg-white transition-all duration-1000 shadow-glow"
                                                 style={{ width: `${(decisions.length / 5) * 100}%` }}
                                             />
                                         </div>
-                                        <span className="text-xs font-black text-white uppercase tracking-widest">{decisions.length}/5 COMPLETE</span>
+                                        <span className="text-[9px] sm:text-xs font-black text-white uppercase tracking-widest">{decisions.length}/5 COMPLETE</span>
                                     </div>
                                 </div>
-                                <div className="flex gap-4">
-                                    <Link href="/decision/new">
-                                        <Button className="bg-white text-primary border-none hover:bg-blue-50 rounded-2xl h-16 px-8 text-lg font-black shadow-xl shadow-black/20">Record Next Choice</Button>
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                    <Link href="/decision/new" className="w-full sm:w-auto">
+                                        <Button className="w-full bg-white text-primary border-none hover:bg-blue-50 rounded-xl sm:rounded-2xl h-12 sm:h-16 px-6 sm:px-8 text-sm sm:text-lg font-black shadow-xl">Record Choice</Button>
                                     </Link>
                                     <Button
                                         variant="outline"
                                         size="icon"
                                         onClick={() => setShowOnboarding(false)}
-                                        className="rounded-2xl border-white/20 bg-white/10 text-white hover:bg-white/20 h-16 w-16"
+                                        className="sm:rounded-2xl rounded-xl border-white/20 bg-white/10 text-white hover:bg-white/20 h-12 w-12 sm:h-16 sm:w-16"
                                     >
-                                        <X size={28} />
+                                        <X size={20} className="sm:size-7" />
                                     </Button>
                                 </div>
                             </div>
@@ -161,8 +161,8 @@ export default function DashboardClient() {
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors" size={20} />
                         <input
                             type="text"
-                            placeholder="Search decisions, results, or alternatives..."
-                            className="w-full pl-12 pr-12 h-16 rounded-2xl border border-white/10 bg-white/5 shadow-soft focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold text-lg text-white placeholder:text-gray-500"
+                            placeholder="Search decisions..."
+                            className="w-full pl-12 pr-12 h-12 sm:h-16 rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 shadow-soft focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold text-base sm:text-lg text-white placeholder:text-gray-500"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
@@ -176,15 +176,15 @@ export default function DashboardClient() {
                         )}
                     </div>
 
-                    <div className="flex items-center gap-2 overflow-x-auto pb-2 xl:pb-0 w-full no-scrollbar">
+                    <div className="flex items-center gap-2 overflow-x-auto pb-4 xl:pb-0 w-full no-scrollbar px-1 sm:px-0">
                         {CATEGORIES.map((cat) => (
                             <button
                                 key={cat}
                                 onClick={() => setSelectedCategory(cat)}
                                 className={cn(
-                                    "px-8 h-16 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border whitespace-nowrap",
+                                    "px-4 sm:px-8 h-10 sm:h-16 rounded-xl sm:rounded-2xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all border whitespace-nowrap",
                                     selectedCategory === cat
-                                        ? "bg-primary text-white border-primary shadow-glow scale-105"
+                                        ? "bg-primary text-white border-primary shadow-glow"
                                         : "bg-white/5 text-gray-500 border-white/5 hover:border-white/10 hover:text-white"
                                 )}
                             >
@@ -225,7 +225,7 @@ export default function DashboardClient() {
                             exit={{ height: 0, opacity: 0 }}
                             className="overflow-hidden"
                         >
-                            <Card className="rounded-[2.5rem] border border-white/10 bg-white/5 p-10 grid grid-cols-1 md:grid-cols-3 gap-12">
+                            <Card className="rounded-2xl sm:rounded-[2.5rem] border border-white/10 bg-white/5 p-6 sm:p-10 grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-12">
                                 <div className="space-y-4">
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
                                         <Clock size={12} />
