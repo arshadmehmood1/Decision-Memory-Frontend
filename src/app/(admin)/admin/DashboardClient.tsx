@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { toast } from 'sonner';
+import { formatDistanceToNow } from 'date-fns';
 
 export default function DashboardClient() {
     const [stats, setStats] = useState<any>(null);
@@ -32,42 +33,20 @@ export default function DashboardClient() {
         setMounted(true);
         const fetchStats = async () => {
             try {
-                // Mock data for now, would be a real API call
-                // const res = await apiRequest('/admin/stats');
-                // setStats(res.data);
-                await new Promise(r => setTimeout(r, 1000));
-                setStats({
-                    totalUsers: 1248,
-                    activeUsers: 856,
-                    mrr: 15420,
-                    serverLoad: 42,
-                    userGrowth: +12.5,
-                    revenueGrowth: +8.2,
-                    recentActivity: [
-                        { id: 1, type: 'USER_JOINED', user: 'Alex Chen', time: '2m ago' },
-                        { id: 2, type: 'SUB_UPGRADE', user: 'Sarah Miller', plan: 'Team', time: '15m ago' },
-                        { id: 3, type: 'ALERT', message: 'High API latency detected in EU-West', time: '1h ago' },
-                        { id: 4, type: 'USER_JOINED', user: 'Mike Ross', time: '2h ago' }
-                    ],
-                    chartData: [
-                        { name: 'Mon', users: 400, revenue: 2400 },
-                        { name: 'Tue', users: 300, revenue: 1398 },
-                        { name: 'Wed', users: 200, revenue: 9800 },
-                        { name: 'Thu', users: 278, revenue: 3908 },
-                        { name: 'Fri', users: 189, revenue: 4800 },
-                        { name: 'Sat', users: 239, revenue: 3800 },
-                        { name: 'Sun', users: 349, revenue: 4300 },
-                    ]
-                });
+                const res = await apiRequest('/api/admin/stats');
+                setStats(res.data);
             } catch (err) {
                 console.error(err);
-                toast.error("Failed to sync matrix telemetry");
+                toast.error("Telemetry link failed", { description: "Failed to sync with global neural network." });
             } finally {
                 setLoading(false);
             }
         };
 
         fetchStats();
+        // Refresh telemetry every 30 seconds
+        const interval = setInterval(fetchStats, 30000);
+        return () => clearInterval(interval);
     }, []);
 
     if (!mounted) return null;
@@ -224,7 +203,7 @@ export default function DashboardClient() {
                                         {item.type === 'ALERT' && item.message}
                                     </p>
                                     <p className="text-[10px] font-medium text-gray-500 mt-1 flex items-center gap-1">
-                                        <Clock size={10} /> {item.time}
+                                        <Clock size={10} /> {formatDistanceToNow(new Date(item.time), { addSuffix: true })}
                                     </p>
                                 </div>
                             </motion.div>
