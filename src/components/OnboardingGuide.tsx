@@ -5,40 +5,55 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/lib/store';
 import { Button } from '@/components/ui/Button';
-import { BrainCircuit, Target, BarChart3, Rocket, ChevronRight, X } from 'lucide-react';
+import { BrainCircuit, Target, BarChart3, Rocket, ChevronRight, X, Briefcase, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/Input';
+import { toast } from 'sonner';
 
 const steps = [
     {
         title: "Welcome to your Second Brain",
         description: "Decision Memory helps you track, analyze, and optimize your strategic choices using AI-driven insights.",
         icon: <BrainCircuit size={48} className="text-white" />,
-        color: "bg-blue-600"
+        color: "bg-blue-600",
+        id: 'welcome'
+    },
+    {
+        title: "Set Your Prime Workspace",
+        description: "Every great strategy needs a dedicated environment. Name your first sanctuary of logic.",
+        icon: <Briefcase size={48} className="text-white" />,
+        color: "bg-indigo-600",
+        id: 'workspace'
     },
     {
         title: "Log Your First Trace",
         description: "Document the context, assumptions, and alternatives for any important decision. Transparency leads to better outcomes.",
         icon: <Target size={48} className="text-white" />,
-        color: "bg-purple-600"
+        color: "bg-purple-600",
+        id: 'trace'
     },
     {
         title: "AI-Driven Audits",
         description: "Our rule-based engine automatically scans your decisions for blindspots and assumption risks.",
         icon: <BarChart3 size={48} className="text-white" />,
-        color: "bg-amber-600"
+        color: "bg-amber-600",
+        id: 'audits'
     },
     {
         title: "Iterate and Improve",
         description: "Review outcomes months later to build a database of 'what works'. Stop making the same mistakes twice.",
         icon: <Rocket size={48} className="text-white" />,
-        color: "bg-emerald-600"
+        color: "bg-emerald-600",
+        id: 'complete'
     }
 ];
 
 export function OnboardingGuide() {
-    const { currentUser, updateUser } = useStore();
+    const { currentUser, updateUser, currentWorkspaceId, updateWorkspace } = useStore();
     const [currentStep, setCurrentStep] = useState(0);
     const [isVisible, setIsVisible] = useState(false);
+    const [workspaceName, setWorkspaceName] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         // Trigger if user exists and hasn't onboarded
@@ -47,7 +62,29 @@ export function OnboardingGuide() {
         }
     }, [currentUser]);
 
-    const handleNext = () => {
+    const handleNext = async () => {
+        const step = steps[currentStep];
+
+        if (step.id === 'workspace') {
+            if (!workspaceName.trim()) {
+                toast.error("Initialization Failed", { description: "Please name your workspace to continue." });
+                return;
+            }
+
+            if (currentWorkspaceId) {
+                setIsSubmitting(true);
+                try {
+                    await updateWorkspace(currentWorkspaceId, workspaceName.trim());
+                    toast.success("Workspace Established", { description: `"${workspaceName}" is now online.` });
+                } catch (err) {
+                    toast.error("Naming Sync Failed", { description: "We couldn't rename the workspace." });
+                    setIsSubmitting(false);
+                    return;
+                }
+                setIsSubmitting(false);
+            }
+        }
+
         if (currentStep < steps.length - 1) {
             setCurrentStep(currentStep + 1);
         } else {
@@ -65,6 +102,8 @@ export function OnboardingGuide() {
     };
 
     if (!isVisible) return null;
+
+    const currentStepData = steps[currentStep];
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-xl">
@@ -104,29 +143,53 @@ export function OnboardingGuide() {
                         >
                             <div className={cn(
                                 "w-24 h-24 rounded-3xl mx-auto flex items-center justify-center shadow-2xl",
-                                steps[currentStep].color
+                                currentStepData.color
                             )}>
-                                {steps[currentStep].icon}
+                                {currentStepData.icon}
                             </div>
 
                             <div className="space-y-3">
                                 <h2 className="text-3xl font-black text-white tracking-tighter uppercase">
-                                    {steps[currentStep].title}
+                                    {currentStepData.title}
                                 </h2>
                                 <p className="text-[#8b949e] text-lg leading-relaxed px-4">
-                                    {steps[currentStep].description}
+                                    {currentStepData.description}
                                 </p>
                             </div>
+
+                            {currentStepData.id === 'workspace' && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="pt-4 max-w-xs mx-auto"
+                                >
+                                    <Input
+                                        value={workspaceName}
+                                        onChange={(e) => setWorkspaceName(e.target.value)}
+                                        placeholder="e.g. Strategic Operations"
+                                        className="h-14 bg-white/5 border-white/10 rounded-xl text-center text-lg font-bold text-white placeholder:text-gray-600 focus:border-primary focus:ring-1 focus:ring-primary shadow-inner"
+                                        autoFocus
+                                    />
+                                    <p className="mt-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Global Identifier</p>
+                                </motion.div>
+                            )}
                         </motion.div>
                     </AnimatePresence>
 
                     <div className="mt-12 flex gap-4">
                         <Button
                             onClick={handleNext}
-                            className="flex-1 h-14 rounded-2xl text-lg font-black bg-primary hover:bg-primary/90 text-white shadow-glow uppercase tracking-wider group"
+                            disabled={isSubmitting}
+                            className="flex-1 h-16 rounded-2xl text-lg font-black bg-primary hover:bg-primary/90 text-white shadow-glow uppercase tracking-wider group relative overflow-hidden"
                         >
-                            {currentStep === steps.length - 1 ? "Initialize Experience" : "Next Protocol"}
-                            <ChevronRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+                            {isSubmitting ? (
+                                <Loader2 className="animate-spin" />
+                            ) : (
+                                <>
+                                    {currentStep === steps.length - 1 ? "Initialize Experience" : "Next Protocol"}
+                                    <ChevronRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+                                </>
+                            )}
                         </Button>
                     </div>
                 </div>
