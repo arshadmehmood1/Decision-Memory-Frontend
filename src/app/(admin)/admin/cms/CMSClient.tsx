@@ -297,13 +297,13 @@ export default function CMSClient() {
                                                 >
                                                     <Eye size={16} />
                                                 </Button>
-                                                {(v.status === 'DRAFT' || v.status === 'SCHEDULED') && (
+                                                {(v.status === 'DRAFT' || v.status === 'SCHEDULED' || v.status === 'ARCHIVED') && (
                                                     <Button
                                                         onClick={() => handleApprove(v.id)}
                                                         className="h-10 text-[10px] font-black uppercase tracking-widest bg-emerald-500 text-white hover:shadow-[0_0_20px_rgba(16,185,129,0.3)]"
                                                     >
                                                         <CheckCircle size={14} className="mr-2" />
-                                                        Approve
+                                                        {v.status === 'ARCHIVED' ? 'Restore' : 'Approve'}
                                                     </Button>
                                                 )}
                                                 {v.status === 'LIVE' && (
