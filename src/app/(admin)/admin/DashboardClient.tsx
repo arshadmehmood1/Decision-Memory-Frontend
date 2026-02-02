@@ -45,16 +45,52 @@ export default function DashboardClient() {
     const [stats, setStats] = useState<AdminStats | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isPurging, setIsPurging] = useState(false);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
         loadStats();
         const interval = setInterval(loadStats, 30000); // 30s refresh
         return () => clearInterval(interval);
     }, []);
 
+    const loadStats = async () => {
+        try {
+            const res = await apiRequest<{ data: AdminStats }>('/api/admin/stats');
+            setStats(res.data);
+        } catch (err) {
+            console.error(err);
+            toast.error("Telemetry link failed", { description: "Failed to sync with global neural network." });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handlePurgeCache = async () => {
+        setIsPurging(true);
+        try {
+            await apiRequest('/api/admin/system/purge-cache', { method: 'POST' });
+            toast.success("Global CDN matrix cleared.");
+        } catch (err) {
+            toast.error("Purge failed. Matrix persists.");
+        } finally {
+            setIsPurging(false);
+        }
+    };
+
+    const handleToggleSystem = async () => {
+        try {
+            await apiRequest('/api/admin/system/toggle-maintenance', { method: 'POST' });
+            toast.success("System status synchronized.");
+            loadStats();
+        } catch (err) {
+            toast.error("Synchronization failed.");
+        }
+    };
+
     if (!mounted) return null;
 
-    if (loading) {
+    if (isLoading || !stats) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
                 <div className="flex flex-col items-center gap-4">
