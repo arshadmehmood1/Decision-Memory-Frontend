@@ -247,8 +247,8 @@ export default function CMSClient() {
                             </div>
 
                             {versions.length === 0 && (
-                                <div className="text-center py-10 text-gray-500 text-sm">
-                                    No versions found in the matrix. Create one to begin.
+                                <div className="text-center py-10 text-gray-500 text-[10px] font-black uppercase tracking-widest border-2 border-dashed border-white/5 rounded-3xl">
+                                    No {activeTab.toLowerCase()} vectors found in the matrix.
                                 </div>
                             )}
 
@@ -259,21 +259,23 @@ export default function CMSClient() {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: i * 0.1 }}
                                 >
-                                    <Card className="p-6 bg-[#0d1117] border-white/5 hover:border-white/10 transition-all group overflow-hidden relative">
-                                        {v.status === 'LIVE' && (
-                                            <div className="absolute top-0 right-0 p-1 bg-emerald-500/10 border-b border-l border-emerald-500/20 text-emerald-500 text-[8px] font-black uppercase tracking-widest px-3">
-                                                Current Reality
+                                    <Card className="p-6 bg-[#0d1117] border-white/5 hover:border-white/10 transition-all group overflow-hidden relative mb-4">
+                                        {(v.status === 'LIVE' || v.status === 'APPROVED') && (
+                                            <div className={`absolute top-0 right-0 p-1 ${v.status === 'LIVE' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-blue-500/10 text-blue-500'} border-b border-l border-white/5 text-[8px] font-black uppercase tracking-widest px-3`}>
+                                                {v.status === 'LIVE' ? 'Current Reality' : 'Approved Vector'}
                                             </div>
                                         )}
                                         <div className="flex items-start justify-between relative z-10">
                                             <div className="flex gap-6">
                                                 <div className={`w-14 h-14 rounded-2xl ${v.status === 'LIVE' ? 'bg-emerald-400/5' : 'bg-blue-400/5'} border border-white/5 flex flex-col items-center justify-center`}>
-                                                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-tighter">VER</span>
-                                                    <span className={`text-xs font-black ${v.status === 'LIVE' ? 'text-emerald-400' : 'text-blue-400'}`}>{v.id.substring(0, 4)}</span>
+                                                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-tighter">{activeTab === 'ROADMAP' ? 'MAP' : 'VER'}</span>
+                                                    <span className={`text-xs font-black ${v.status === 'LIVE' ? 'text-emerald-400' : 'text-blue-400'}`}>{v.version || (v.id ? v.id.substring(0, 4) : '---')}</span>
                                                 </div>
                                                 <div>
                                                     <div className="flex items-center gap-3 mb-1">
-                                                        <h4 className="text-sm font-black text-white hover:text-primary transition-colors cursor-pointer">{v.changes || v.pageName}</h4>
+                                                        <h4 className="text-sm font-black text-white hover:text-primary transition-colors cursor-pointer">
+                                                            {v.title || v.changes || v.pageName || 'Untitled Vector'}
+                                                        </h4>
                                                         <Badge className={`text-[8px] font-black uppercase tracking-widest border-transparent ${v.status === 'LIVE' ? 'bg-emerald-500/10 text-emerald-500' :
                                                             v.status === 'SCHEDULED' ? 'bg-amber-500/10 text-amber-500' :
                                                                 'bg-blue-500/10 text-blue-500'
@@ -282,7 +284,7 @@ export default function CMSClient() {
                                                         </Badge>
                                                     </div>
                                                     <p className="text-[10px] font-black text-gray-500 uppercase tracking-tighter">
-                                                        By {v.approvedBy || 'Unknown'} • {new Date(v.createdAt).toLocaleDateString()}
+                                                        {activeTab === 'ROADMAP' ? (v.type || 'FEATURE') : `By ${v.approvedBy || 'Unknown'}`} • {new Date(v.createdAt).toLocaleDateString()}
                                                     </p>
                                                 </div>
                                             </div>
@@ -319,9 +321,32 @@ export default function CMSClient() {
                                 </motion.div>
                             ))}
 
-                            <div className="mt-8 text-center py-10 border-2 border-dashed border-white/5 rounded-3xl group hover:border-primary/20 transition-all cursor-pointer">
-                                <Zap className="mx-auto text-gray-700 group-hover:text-primary transition-colors mb-4" size={32} />
-                                <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Request Content Splinter</h4>
+                            <div className="flex gap-4 mt-8">
+                                <div
+                                    onClick={() => setShowEditor(true)}
+                                    className="flex-1 text-center py-10 border-2 border-dashed border-white/5 rounded-3xl group hover:border-primary/20 transition-all cursor-pointer"
+                                >
+                                    <Plus className="mx-auto text-gray-700 group-hover:text-primary transition-colors mb-4" size={32} />
+                                    <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Draft New Vector</h4>
+                                </div>
+
+                                {activeTab === 'ROADMAP' && versions.length === 0 && (
+                                    <div
+                                        onClick={async () => {
+                                            try {
+                                                await apiRequest('/admin/system/seed-roadmap', { method: 'POST' });
+                                                toast.success("Roadmap matrix initialized.");
+                                                loadRoadmap();
+                                            } catch (err) {
+                                                toast.error("Seeding failed.");
+                                            }
+                                        }}
+                                        className="flex-1 text-center py-10 border-2 border-dashed border-primary/20 rounded-3xl group hover:border-primary/40 transition-all cursor-pointer bg-primary/5"
+                                    >
+                                        <Zap className="mx-auto text-primary transition-colors mb-4" size={32} />
+                                        <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Seed Roadmap Matrix</h4>
+                                    </div>
+                                )}
                             </div>
                         </>
                     )}
