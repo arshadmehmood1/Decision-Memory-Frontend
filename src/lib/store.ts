@@ -59,7 +59,7 @@ export interface Decision {
     decision: string;
     context: string;
     alternatives: { name: string; whyRejected: string }[];
-    assumptions: { id: string; value: string; validatedAs?: string; validatedOn?: string; validationNotes?: string }[];
+    assumptions: { id?: string; value: string; validatedAs?: string; validatedOn?: string; validationNotes?: string }[];
     successCriteria: { value: string }[];
     tags?: string[];
     comments: Comment[];
