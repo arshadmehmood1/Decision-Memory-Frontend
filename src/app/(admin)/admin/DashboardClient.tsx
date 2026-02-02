@@ -24,28 +24,31 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart,
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 
+interface AdminStats {
+    totalUsers: number;
+    activeUsers: number;
+    mrr: number;
+    serverLoad: number;
+    userGrowth: number;
+    revenueGrowth: number;
+    recentActivity: any[];
+    chartData: any[];
+    health: {
+        status: string;
+        dbLatency: string;
+        cdnStatus: string;
+        lastSync: string;
+    };
+}
+
 export default function DashboardClient() {
-    const [stats, setStats] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-    const [mounted, setMounted] = useState(false);
+    const [stats, setStats] = useState<AdminStats | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isPurging, setIsPurging] = useState(false);
 
     useEffect(() => {
-        setMounted(true);
-        const fetchStats = async () => {
-            try {
-                const res = await apiRequest('/api/admin/stats');
-                setStats(res.data);
-            } catch (err) {
-                console.error(err);
-                toast.error("Telemetry link failed", { description: "Failed to sync with global neural network." });
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchStats();
-        // Refresh telemetry every 30 seconds
-        const interval = setInterval(fetchStats, 30000);
+        loadStats();
+        const interval = setInterval(loadStats, 30000); // 30s refresh
         return () => clearInterval(interval);
     }, []);
 
@@ -217,25 +220,32 @@ export default function DashboardClient() {
 
             {/* Quick Actions */}
             <div className="flex gap-4 overflow-x-auto pb-4">
-                <Button className="h-14 px-6 bg-white/5 hover:bg-white/10 border border-white/5 rounded-2xl flex items-center gap-3 shrink-0">
-                    <Globe className="text-blue-400" size={20} />
+                <Button
+                    onClick={handlePurgeCache}
+                    disabled={isPurging}
+                    className="h-14 px-6 bg-white/5 hover:bg-white/10 border border-white/5 rounded-2xl flex items-center gap-3 shrink-0"
+                >
+                    <Globe className={isPurging ? "text-blue-400 animate-spin" : "text-blue-400"} size={20} />
                     <div className="text-left">
                         <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Global CDN</p>
-                        <p className="text-xs font-black text-white uppercase tracking-wider">Purge Cache</p>
+                        <p className="text-xs font-black text-white uppercase tracking-wider">{isPurging ? 'Purging...' : 'Purge Cache'}</p>
                     </div>
                 </Button>
-                <Button className="h-14 px-6 bg-white/5 hover:bg-white/10 border border-white/5 rounded-2xl flex items-center gap-3 shrink-0">
-                    <Zap className="text-amber-400" size={20} />
+                <Button
+                    onClick={handleToggleSystem}
+                    className="h-14 px-6 bg-white/5 hover:bg-white/10 border border-white/5 rounded-2xl flex items-center gap-3 shrink-0"
+                >
+                    <Zap className="text-emerald-400" size={20} />
                     <div className="text-left">
                         <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">System Status</p>
-                        <p className="text-xs font-black text-white uppercase tracking-wider">All Systems Normal</p>
+                        <p className="text-xs font-black text-white uppercase tracking-wider">{stats.health.status === 'HEALTHY' ? 'All Systems Normal' : 'Maintenance Active'}</p>
                     </div>
                 </Button>
                 <Button className="h-14 px-6 bg-white/5 hover:bg-white/10 border border-white/5 rounded-2xl flex items-center gap-3 shrink-0">
                     <Server className="text-purple-400" size={20} />
                     <div className="text-left">
                         <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Database</p>
-                        <p className="text-xs font-black text-white uppercase tracking-wider">Optimization Required</p>
+                        <p className="text-xs font-black text-white uppercase tracking-wider">Latence: {stats.health.dbLatency}</p>
                     </div>
                 </Button>
             </div>
