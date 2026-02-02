@@ -886,8 +886,16 @@ export const useStore = create<UserStore>()(
             name: 'decision-memory-storage',
             storage: createJSONStorage(() => localStorage),
             partialize: (state) => {
+                // Exclude transient/loading states and heavy refetch-able data from persistence
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const { isAuthReady, ...rest } = state;
+                const {
+                    isAuthReady,
+                    isLoading,
+                    error,
+                    insights,
+                    notifications,
+                    ...rest
+                } = state;
                 return rest;
             },
         }

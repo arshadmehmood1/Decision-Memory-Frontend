@@ -303,7 +303,7 @@ export default function DashboardClient() {
                             exit={{ height: 0, opacity: 0 }}
                             className="overflow-hidden"
                         >
-                            <Card className="rounded-2xl sm:rounded-[2.5rem] border border-white/10 bg-white/5 p-6 sm:p-10 grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-12">
+                            <Card className="rounded-2xl sm:rounded-[2.5rem] border border-white/10 bg-white/5 p-6 sm:p-10 grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-12 backdrop-blur-md">
                                 <div className="space-y-4">
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
                                         <Clock size={12} />
@@ -329,7 +329,7 @@ export default function DashboardClient() {
                                                     "cursor-pointer transition-all text-[9px] font-black px-4 py-2 rounded-xl h-10 uppercase tracking-widest",
                                                     selectedStatus === status
                                                         ? "bg-primary text-white border-primary shadow-glow"
-                                                        : "bg-white/50 hover:bg-white hover:border-primary"
+                                                        : "bg-white/[0.05] hover:bg-white hover:text-black hover:border-primary"
                                                 )}
                                             >
                                                 {status}
@@ -346,11 +346,11 @@ export default function DashboardClient() {
                                         <select
                                             value={selectedOwner}
                                             onChange={(e) => setSelectedOwner(e.target.value)}
-                                            className="w-full h-12 rounded-xl border border-gray-200 bg-white text-[10px] font-black uppercase tracking-widest px-4 outline-none appearance-none cursor-pointer focus:border-primary transition-colors"
+                                            className="w-full h-12 rounded-xl border border-white/10 bg-white/5 text-white text-[10px] font-black uppercase tracking-widest px-4 outline-none appearance-none cursor-pointer focus:border-primary transition-colors"
                                         >
-                                            <option value="ALL">All Members</option>
-                                            <option value="ME">Created by Me</option>
-                                            <option value="OTHERS">Team Members</option>
+                                            <option value="ALL" className="bg-[#0d1117]">All Members</option>
+                                            <option value="ME" className="bg-[#0d1117]">Created by Me</option>
+                                            <option value="OTHERS" className="bg-[#0d1117]">Team Members</option>
                                         </select>
                                         <ChevronRight size={16} className="absolute right-4 top-1/2 -translate-y-1/2 rotate-90 text-gray-400 pointer-events-none" />
                                     </div>

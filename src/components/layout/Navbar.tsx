@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { useClerk } from '@clerk/nextjs';
 import { useStore } from '@/lib/store';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -50,12 +50,18 @@ export function Navbar() {
     const [showPricing, setShowPricing] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const currentWorkspace = workspaces.find(w => w.id === currentWorkspaceId) || workspaces[0] || { name: 'Workspace', planTier: 'FREE' };
+    const currentWorkspace = useMemo(() =>
+        workspaces.find(w => w.id === currentWorkspaceId) || workspaces[0] || { name: 'Workspace', planTier: 'FREE' },
+        [workspaces, currentWorkspaceId]
+    );
 
-    // Filter decisions by current workspace
-    const workspaceDecisions = decisions
-        .filter(d => d.workspaceId === currentWorkspaceId)
-        .slice(0, 4);
+    // Filter decisions by current workspace - memoized to prevent lag
+    const workspaceDecisions = useMemo(() =>
+        decisions
+            .filter(d => d.workspaceId === currentWorkspaceId)
+            .slice(0, 4),
+        [decisions, currentWorkspaceId]
+    );
 
     const handleCreateWorkspace = (e: React.FormEvent) => {
         e.preventDefault();
@@ -78,7 +84,7 @@ export function Navbar() {
     }, []);
 
     return (
-        <header className="h-16 bg-black/40 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-4 md:px-6 shrink-0 z-50 sticky top-0 w-full text-[#c9d1d9]">
+        <header className="h-16 bg-black/40 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-4 md:px-6 shrink-0 z-50 sticky top-0 w-full text-[#c9d1d9]">
             {/* Left: Logo & Nav */}
             <div className="flex items-center gap-4">
                 <div className="relative">

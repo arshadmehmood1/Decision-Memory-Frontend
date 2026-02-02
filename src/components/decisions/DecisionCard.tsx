@@ -70,13 +70,7 @@ export function DecisionCard({ decision }: DecisionCardProps) {
     };
 
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            whileHover={{ scale: 1.01, y: -2 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="relative"
-        >
+        <div className="relative group/card transition-all duration-300 hover:scale-[1.01] hover:-translate-y-0.5">
             {/* Neural Glow Overlay for Critical Risks */}
             {isCritical && (
                 <motion.div
@@ -93,7 +87,7 @@ export function DecisionCard({ decision }: DecisionCardProps) {
                 <div className={cn(
                     "group relative z-10 flex flex-col md:flex-row gap-6 md:gap-4 items-start md:items-center justify-between p-5 sm:p-8 rounded-2xl sm:rounded-[2rem] border transition-all duration-500 overflow-hidden",
                     isCritical
-                        ? "bg-black/60 border-red-500/30 shadow-[0_0_40px_rgba(239,68,68,0.1)] backdrop-blur-2xl"
+                        ? "bg-black/60 border-red-500/30 shadow-[0_0_40px_rgba(239,68,68,0.1)] backdrop-blur-md"
                         : "bg-white/[0.03] border-white/5 hover:border-white/20 hover:bg-white/[0.06] backdrop-blur-md"
                 )}>
                     {/* Interior Neural Flux Decor */}
@@ -191,6 +185,6 @@ export function DecisionCard({ decision }: DecisionCardProps) {
                     </div>
                 </div>
             </Link>
-        </motion.div>
+        </div>
     );
 }
