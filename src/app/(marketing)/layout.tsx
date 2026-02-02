@@ -17,7 +17,9 @@ export default function MarketingLayout({
     const pathname = usePathname();
 
     React.useEffect(() => {
-        window.scrollTo(0, 0);
+        if (!window.location.hash) {
+            window.scrollTo(0, 0);
+        }
     }, [pathname]);
 
     return (
