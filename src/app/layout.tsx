@@ -38,6 +38,8 @@ export default function RootLayout({
       >
         <ClientProviders>
           {children}
+          {/* Target for Clerk Bot Protection */}
+          <div id="clerk-captcha" />
         </ClientProviders>
       </body>
     </html>

@@ -194,6 +194,9 @@ export default function SignupPage() {
                                     </span>
                                 </Button>
 
+                                {/* Target for Clerk Bot Protection */}
+                                <div id="clerk-captcha" className="mt-2" />
+
                                 <div className="relative my-4">
                                     <div className="absolute inset-0 flex items-center">
                                         <span className="w-full border-t border-white/5" />
