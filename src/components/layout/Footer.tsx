@@ -25,10 +25,10 @@ export function Footer() {
                     <div>
                         <h4 className="text-sm font-black uppercase tracking-widest text-white mb-6">Product</h4>
                         <ul className="space-y-4">
-                            {['Features', 'Pricing', 'API', 'Docs'].map((item) => (
+                            {['Features', 'Pricing', 'Docs'].map((item) => (
                                 <li key={item}>
                                     <Link
-                                        href={item === 'API' ? '/docs/api' : item === 'Docs' ? '/docs' : `/#${item.toLowerCase()}`}
+                                        href={item === 'Docs' ? '/docs' : `/#${item.toLowerCase()}`}
                                         className="text-blue-400 hover:text-white transition-colors font-bold"
                                     >
                                         {item}
