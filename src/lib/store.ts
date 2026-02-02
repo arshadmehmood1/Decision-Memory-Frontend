@@ -33,6 +33,19 @@ export interface Notification {
     createdAt: string;
 }
 
+export interface OutcomeReview {
+    outcome: 'SUCCEEDED' | 'FAILED' | 'REVERSED';
+    whatHappened?: string;
+    whatWentWrong?: string;
+    rootCause?: string;
+    couldWeHaveKnown?: string;
+    whatWeLearned?: string;
+    costOfFailure?: string;
+    actualImpact?: string;
+    wouldMakeAgain?: boolean;
+    assumptionValidations?: { id: string; validatedAs: 'TRUE' | 'FALSE' | 'PARTIALLY_TRUE' | 'UNKNOWN'; notes?: string }[];
+}
+
 export interface Decision {
     id: string;
     title: string;
@@ -46,10 +59,22 @@ export interface Decision {
     decision: string;
     context: string;
     alternatives: { name: string; whyRejected: string }[];
-    assumptions: { id?: string; value: string }[];
+    assumptions: { id: string; value: string; validatedAs?: string; validatedOn?: string; validationNotes?: string }[];
     successCriteria: { value: string }[];
     tags?: string[];
     comments: Comment[];
+    review?: {
+        outcome: string;
+        whatHappened?: string;
+        whatWentWrong?: string;
+        rootCause?: string;
+        couldWeHaveKnown?: string;
+        whatWeLearned?: string;
+        costOfFailure?: string;
+        actualImpact?: string;
+        wouldMakeAgain?: boolean;
+        createdAt: string;
+    };
     // Backend specific fields we might want to preserve
     aiRiskScore?: number;
     links?: { id: string; type: 'RELIES_ON' | 'SUPERSEDES' | 'RELATES_TO' | 'BLOCKED_BY'; targetId: string; targetTitle: string; }[];
@@ -96,6 +121,9 @@ interface ApiWorkspace {
 interface ApiAssumption {
     id: string;
     text: string;
+    validatedAs?: string;
+    validatedOn?: string;
+    validationNotes?: string;
 }
 
 interface ApiDecision {
@@ -115,6 +143,18 @@ interface ApiDecision {
     tags: string[];
     aiRiskScore?: number;
     links?: { id: string; type: 'RELIES_ON' | 'SUPERSEDES' | 'RELATES_TO' | 'BLOCKED_BY'; targetId: string; targetTitle: string; }[];
+    review?: {
+        outcome: string;
+        whatHappened?: string;
+        whatWentWrong?: string;
+        rootCause?: string;
+        couldWeHaveKnown?: string;
+        whatWeLearned?: string;
+        costOfFailure?: string;
+        actualImpact?: string;
+        wouldMakeAgain?: boolean;
+        createdAt: string;
+    };
 }
 
 interface ApiComment {
@@ -186,6 +226,7 @@ interface UserStore {
     addDecision: (decision: Omit<Decision, 'id' | 'madeOn' | 'madeBy' | 'status' | 'comments' | 'workspaceId'>) => Promise<void>;
     updateDecision: (id: string, decision: Partial<Decision>) => Promise<void>;
     updateDecisionStatus: (id: string, status: Decision['status']) => Promise<void>;
+    recordOutcome: (id: string, data: OutcomeReview) => Promise<void>;
     addComment: (decisionId: string, content: string, isAnonymous: boolean) => Promise<void>;
     fetchComments: (decisionId: string) => Promise<void>;
     linkDecision: (sourceId: string, targetId: string, type: 'RELIES_ON' | 'SUPERSEDES' | 'RELATES_TO' | 'BLOCKED_BY') => Promise<void>;
@@ -488,6 +529,46 @@ export const useStore = create<UserStore>()(
                     console.error("Failed to update status - Rolling back Protocol", err);
                     // 2. Rollback
                     set({ decisions: previousDecisions });
+                }
+            },
+
+            recordOutcome: async (id, data) => {
+                const previousDecisions = get().decisions;
+
+                // Optimistic update of status
+                set((state) => ({
+                    decisions: state.decisions.map((d) =>
+                        d.id === id ? { ...d, status: data.outcome } : d
+                    ),
+                }));
+
+                try {
+                    await apiRequest(`/decisions/${id}/outcome`, {
+                        method: 'POST',
+                        body: JSON.stringify(data)
+                    });
+                    // Refresh the decision to get the full review object and assumption statuses
+                    const res = await apiRequest<{ data: ApiDecision }>(`/decisions/${id}`);
+                    set(state => ({
+                        decisions: state.decisions.map(d =>
+                            d.id === id ? {
+                                ...d,
+                                status: res.data.status,
+                                assumptions: (res.data as any).assumptions.map((a: any) => ({
+                                    id: a.id,
+                                    value: a.text,
+                                    validatedAs: a.validatedAs,
+                                    validatedOn: a.validatedOn,
+                                    validationNotes: a.validationNotes
+                                })),
+                                review: (res.data as any).review
+                            } : d
+                        )
+                    }));
+                } catch (err) {
+                    console.error("Failed to record outcome - Rolling back Protocol", err);
+                    set({ decisions: previousDecisions });
+                    throw err;
                 }
             },
 

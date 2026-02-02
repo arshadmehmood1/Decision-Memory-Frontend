@@ -40,7 +40,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { formatDate, cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useStore, Decision } from '@/lib/store';
+import { useStore, Decision, OutcomeReview } from '@/lib/store';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -56,7 +56,7 @@ const statusVariants: Record<string, any> = {
 export default function DecisionDetailClient() {
     const params = useParams();
     const router = useRouter();
-    const { decisions, updateDecisionStatus, currentUser, addComment, analyzeBlindspots, checkAssumption, fetchComments, featureFlags } = useStore();
+    const { decisions, updateDecisionStatus, recordOutcome, currentUser, addComment, analyzeBlindspots, checkAssumption, fetchComments, featureFlags } = useStore();
     const contentRef = React.useRef<HTMLDivElement>(null);
     const [showOutcomeFlow, setShowOutcomeFlow] = useState(false);
     const [activeTab, setActiveTab] = useState<'trace' | 'reviews'>('trace');
@@ -176,6 +176,31 @@ export default function DecisionDetailClient() {
         }
     };
 
+    const [auditStep, setAuditStep] = useState(1);
+    const [auditData, setAuditData] = useState<Partial<OutcomeReview>>({
+        outcome: 'SUCCEEDED',
+        assumptionValidations: []
+    });
+
+    const handleStartAudit = () => {
+        setAuditData({
+            outcome: 'SUCCEEDED',
+            assumptionValidations: decision.assumptions.map(a => ({ id: a.id, validatedAs: 'UNKNOWN' }))
+        });
+        setAuditStep(1);
+        setShowOutcomeFlow(true);
+    };
+
+    const handleAuditSubmit = async () => {
+        try {
+            await recordOutcome(decision.id, auditData as OutcomeReview);
+            setShowOutcomeFlow(false);
+            toast.success("Audit Recorded", { description: "The strategic trajectory has been updated." });
+        } catch (err) {
+            toast.error("Audit Failed", { description: "Internal neural error during persistence." });
+        }
+    };
+
     return (
         <div className="max-w-6xl mx-auto pb-32 space-y-12">
             <div className="flex items-center justify-between px-4">
@@ -223,9 +248,11 @@ export default function DecisionDetailClient() {
                                 <Edit3 size={18} className="mr-2" />Edit Trace
                             </Button>
                         </Link>
-                        <Button onClick={() => setShowOutcomeFlow(true)} className="flex-1 md:flex-none h-14 px-10 rounded-2xl shadow-glow font-black text-sm uppercase tracking-widest transition-all active:scale-90 group">
-                            Record Reality<ChevronRight size={20} className="ml-2 mt-0.5 group-hover:translate-x-1 transition-transform" />
-                        </Button>
+                        {decision.status === 'ACTIVE' && (
+                            <Button onClick={handleStartAudit} className="flex-1 md:flex-none h-14 px-10 rounded-2xl shadow-glow font-black text-sm uppercase tracking-widest transition-all active:scale-90 group">
+                                Record Reality<ChevronRight size={20} className="ml-2 mt-0.5 group-hover:translate-x-1 transition-transform" />
+                            </Button>
+                        )}
                     </div>
                 </div>
             </Card>
@@ -243,6 +270,28 @@ export default function DecisionDetailClient() {
             {activeTab === 'trace' ? (
                 <div ref={contentRef} className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="lg:col-span-8 space-y-16">
+                        {decision.review && (
+                            <div className="space-y-8 p-10 bg-emerald-500/5 border border-emerald-500/10 rounded-[2.5rem] relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-4">
+                                    <ShieldCheck className="text-emerald-500/20 group-hover:text-emerald-500/40 transition-colors" size={64} />
+                                </div>
+                                <div className="space-y-4 relative z-10">
+                                    <div className="flex items-center gap-3">
+                                        <Badge className="bg-emerald-500/20 text-emerald-400 font-black tracking-widest text-[10px] uppercase">{decision.review.outcome}</Badge>
+                                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Recorded on {formatDate(decision.review.createdAt)}</span>
+                                    </div>
+                                    <h2 className="text-3xl font-black text-white">Post-Mortem Analysis</h2>
+                                    <p className="text-gray-400 font-bold leading-relaxed">{decision.review.whatHappened}</p>
+                                    {decision.review.whatWeLearned && (
+                                        <div className="mt-6 p-6 bg-white/5 rounded-2xl border border-white/5">
+                                            <h4 className="text-[10px] font-black text-primary uppercase tracking-widest mb-2">Key Learning</h4>
+                                            <p className="text-sm text-gray-300 font-bold italic">"{decision.review.whatWeLearned}"</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                         <div className="relative pl-12 border-l-4 border-dashed border-white/5 py-4">
                             <div className="absolute -left-[14px] top-0 w-6 h-6 rounded-full bg-primary shadow-glow border-4 border-black z-10" />
                             <div className="space-y-8">
@@ -256,6 +305,28 @@ export default function DecisionDetailClient() {
                                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2"><Brain size={14} className="text-primary" />02. Strategic Context</h3>
                                     <p className="text-xl text-gray-400 font-bold leading-relaxed pl-6 border-l-2 border-white/5 italic">{decision.context}</p>
                                 </div>
+
+                                {decision.assumptions.length > 0 && (
+                                    <div className="space-y-6 pt-8">
+                                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2"><Shield size={14} className="text-primary" />03. Assumption Matrix</h3>
+                                        <div className="grid gap-4">
+                                            {decision.assumptions.map((a) => (
+                                                <div key={a.id} className="p-6 bg-white/5 border border-white/5 rounded-2xl flex items-center justify-between group hover:border-white/10 transition-all">
+                                                    <p className="text-sm font-bold text-gray-300">{a.value}</p>
+                                                    {a.validatedAs && (
+                                                        <Badge className={cn("text-[8px] font-black uppercase",
+                                                            a.validatedAs === 'TRUE' ? 'bg-emerald-500/10 text-emerald-500' :
+                                                                a.validatedAs === 'FALSE' ? 'bg-red-500/10 text-red-500' :
+                                                                    'bg-amber-500/10 text-amber-500'
+                                                        )}>
+                                                            {a.validatedAs}
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -305,31 +376,166 @@ export default function DecisionDetailClient() {
 
             <AnimatePresence>
                 {showOutcomeFlow && (
-                    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 backdrop-blur-xl animate-in fade-in duration-300">
-                        <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} className="w-full max-w-xl">
-                            <Card className="rounded-[3rem] shadow-2xl border border-white/10 p-4 bg-black overflow-hidden relative">
+                    <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-xl animate-in fade-in duration-500">
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            className="w-full max-w-2xl"
+                        >
+                            <Card className="rounded-[3rem] shadow-2xl border border-white/10 p-2 bg-[#0d1117] overflow-hidden relative">
+                                <div className="absolute top-0 left-0 w-full h-1 bg-white/5">
+                                    <motion.div
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${(auditStep / 4) * 100}%` }}
+                                        className="h-full bg-primary shadow-glow"
+                                    />
+                                </div>
+
                                 <CardHeader className="text-center pb-8 pt-12 relative z-10">
-                                    <div className="w-20 h-20 bg-primary/10 border border-primary/20 rounded-[2rem] flex items-center justify-center text-primary mx-auto mb-8 shadow-glow"><CheckCircle2 size={40} strokeWidth={3} /></div>
-                                    <CardTitle className="text-4xl font-black text-white tracking-tighter uppercase">Record Reality</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-6 p-8 relative z-10">
-                                    <div className="grid grid-cols-1 gap-6">
-                                        <button onClick={() => handleUpdateStatus('SUCCEEDED')} className="group flex items-center gap-8 p-8 rounded-[2.5rem] border-2 border-white/5 hover:border-success/50 hover:bg-success/5 transition-all text-left bg-white/5">
-                                            <div className="w-20 h-20 rounded-[1.5rem] bg-success/10 flex items-center justify-center text-success shrink-0"><Target size={40} /></div>
-                                            <div className="flex-1"><h5 className="font-black text-white text-xl">Mission Succeeded</h5></div>
-                                        </button>
-                                        <button onClick={() => handleUpdateStatus('FAILED')} className="group flex items-center gap-8 p-8 rounded-[2.5rem] border-2 border-white/5 hover:border-red-500/50 hover:bg-red-500/5 transition-all text-left bg-white/5">
-                                            <div className="w-20 h-20 rounded-[1.5rem] bg-red-500/10 flex items-center justify-center text-red-500 shrink-0"><XCircle size={40} /></div>
-                                            <div className="flex-1"><h5 className="font-black text-white text-xl">Trace Deviation</h5></div>
-                                        </button>
-                                        <button onClick={() => handleUpdateStatus('REVERSED')} className="group flex items-center gap-8 p-8 rounded-[2.5rem] border-2 border-white/5 hover:border-primary/50 hover:bg-primary/5 transition-all text-left bg-white/5">
-                                            <div className="w-20 h-20 rounded-[1.5rem] bg-primary/10 flex items-center justify-center text-primary shrink-0"><RotateCcw size={40} /></div>
-                                            <div className="flex-1"><h5 className="font-black text-white text-xl">Strategic Pivot</h5></div>
-                                        </button>
+                                    <div className="flex items-center justify-between px-8 mb-8">
+                                        <span className="text-[10px] font-black text-primary uppercase tracking-widest">Strategic Audit</span>
+                                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{auditStep} / 4</span>
                                     </div>
+                                    <CardTitle className="text-4xl font-black text-white tracking-tighter uppercase px-8">
+                                        {auditStep === 1 && "Final Verdict"}
+                                        {auditStep === 2 && "Neural Post-Mortem"}
+                                        {auditStep === 3 && "Assumption Check"}
+                                        {auditStep === 4 && "Final Commitment"}
+                                    </CardTitle>
+                                </CardHeader>
+
+                                <CardContent className="space-y-8 p-10 relative z-10 min-h-[400px]">
+                                    {auditStep === 1 && (
+                                        <div className="grid grid-cols-1 gap-4">
+                                            {[
+                                                { id: 'SUCCEEDED', label: 'Mission Succeeded', icon: Target, color: 'success' },
+                                                { id: 'FAILED', label: 'Trace Deviation', icon: XCircle, color: 'red-500' },
+                                                { id: 'REVERSED', label: 'Strategic Pivot', icon: RotateCcw, color: 'primary' }
+                                            ].map((status) => (
+                                                <button
+                                                    key={status.id}
+                                                    onClick={() => {
+                                                        setAuditData((prev: Partial<OutcomeReview>) => ({ ...prev, outcome: status.id as any }));
+                                                        setAuditStep(2);
+                                                    }}
+                                                    className={cn(
+                                                        "group flex items-center gap-8 p-6 rounded-[2rem] border-2 transition-all text-left bg-white/5",
+                                                        auditData.outcome === status.id ? `border-${status.color}/50 bg-${status.color}/5` : "border-white/5 hover:border-white/10"
+                                                    )}
+                                                >
+                                                    <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center shrink-0", `bg-${status.color}/10 text-${status.color}`)}>
+                                                        <status.icon size={32} />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <h5 className="font-black text-white text-lg uppercase tracking-tight">{status.label}</h5>
+                                                        <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">RECORD AS GLOBAL REALITY</p>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {auditStep === 2 && (
+                                        <div className="space-y-6">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">What actually happened?</label>
+                                                <Textarea
+                                                    value={auditData.whatHappened || ''}
+                                                    onChange={e => setAuditData((prev: Partial<OutcomeReview>) => ({ ...prev, whatHappened: e.target.value }))}
+                                                    placeholder="Describe the real-world outcome in high fidelity..."
+                                                    className="min-h-[120px] bg-white/5 border-white/10 rounded-2xl text-white font-bold"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Key Strategic Learning</label>
+                                                <Textarea
+                                                    value={auditData.whatWeLearned || ''}
+                                                    onChange={e => setAuditData((prev: Partial<OutcomeReview>) => ({ ...prev, whatWeLearned: e.target.value }))}
+                                                    placeholder="What should the neural engine remember for next time?"
+                                                    className="min-h-[100px] bg-white/5 border-white/10 rounded-2xl text-white font-bold italic"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {auditStep === 3 && (
+                                        <div className="space-y-6">
+                                            <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-4">Validate the original Decision Foundations:</p>
+                                            <div className="grid gap-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                                                {decision.assumptions.map((a, idx) => {
+                                                    const validation = auditData.assumptionValidations?.find(v => v.id === a.id);
+                                                    return (
+                                                        <div key={a.id} className="p-5 bg-white/5 border border-white/5 rounded-2xl space-y-4">
+                                                            <p className="text-xs font-bold text-gray-300">"{a.value}"</p>
+                                                            <div className="flex gap-2">
+                                                                {['TRUE', 'FALSE', 'PARTIALLY_TRUE'].map(status => (
+                                                                    <button
+                                                                        key={status}
+                                                                        onClick={() => {
+                                                                            const newValidations = [...(auditData.assumptionValidations || [])];
+                                                                            const vIdx = newValidations.findIndex((v: any) => v.id === a.id);
+                                                                            newValidations[vIdx] = { ...newValidations[vIdx], validatedAs: status as any };
+                                                                            setAuditData((prev: Partial<OutcomeReview>) => ({ ...prev, assumptionValidations: newValidations }));
+                                                                        }}
+                                                                        className={cn(
+                                                                            "flex-1 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest border transition-all",
+                                                                            validation?.validatedAs === status ?
+                                                                                (status === 'TRUE' ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400' :
+                                                                                    status === 'FALSE' ? 'bg-red-500/20 border-red-500/50 text-red-400' :
+                                                                                        'bg-amber-500/20 border-amber-500/50 text-amber-400')
+                                                                                : "bg-white/5 border-white/5 text-gray-500 hover:bg-white/10"
+                                                                        )}
+                                                                    >
+                                                                        {status.replace('_', ' ')}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {auditStep === 4 && (
+                                        <div className="flex flex-col items-center justify-center text-center space-y-8 py-10">
+                                            <div className="w-24 h-24 bg-primary/10 border border-primary/20 rounded-[2.5rem] flex items-center justify-center text-primary shadow-glow animate-pulse">
+                                                <Brain size={48} strokeWidth={2.5} />
+                                            </div>
+                                            <div className="space-y-4">
+                                                <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Commit Audit to Trace?</h3>
+                                                <p className="text-gray-500 text-xs font-bold max-w-sm uppercase tracking-widest leading-relaxed">
+                                                    You are about to record this {auditData.outcome} outcome. This will finalize the strategic log and update global metrics.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
                                 </CardContent>
-                                <CardFooter className="flex justify-center p-10 bg-white/5 border-t border-white/5">
-                                    <Button variant="ghost" onClick={() => setShowOutcomeFlow(false)} className="rounded-2xl px-12 h-14 font-black uppercase tracking-widest text-xs text-gray-500 hover:text-white">Back to Trace</Button>
+
+                                <CardFooter className="flex justify-between p-10 bg-white/5 border-t border-white/5">
+                                    <Button
+                                        variant="ghost"
+                                        onClick={() => auditStep === 1 ? setShowOutcomeFlow(false) : setAuditStep((prev: number) => prev - 1)}
+                                        className="rounded-2xl px-8 h-12 font-black uppercase tracking-widest text-[10px] text-gray-500 hover:text-white"
+                                    >
+                                        {auditStep === 1 ? 'Cancel Trace' : 'Prev Vector'}
+                                    </Button>
+                                    {auditStep < 4 ? (
+                                        <Button
+                                            onClick={() => setAuditStep((prev: number) => prev + 1)}
+                                            className="rounded-2xl px-10 h-12 font-black uppercase tracking-widest text-[10px] bg-white text-black hover:bg-gray-200"
+                                        >
+                                            Next Phase <ChevronRight size={14} className="ml-2" />
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            onClick={handleAuditSubmit}
+                                            className="rounded-2xl px-12 h-12 font-black uppercase tracking-widest text-[10px] bg-primary text-white shadow-glow"
+                                        >
+                                            Commit Audit <Zap size={14} className="ml-2" />
+                                        </Button>
+                                    )}
                                 </CardFooter>
                             </Card>
                         </motion.div>
