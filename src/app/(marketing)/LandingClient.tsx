@@ -67,13 +67,18 @@ export default function LandingPage() {
   useEffect(() => {
     const fetchPublic = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/public/community`);
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+        const res = await fetch(`${baseUrl}/public/community`);
+
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
         const data = await res.json();
-        if (data.success) {
-          setPublicDecisions(data.data.slice(0, 3)); // Only show top 3 on landing
+        if (data.success && Array.isArray(data.data)) {
+          setPublicDecisions(data.data.slice(0, 3));
         }
       } catch (err) {
-        console.error("Failed to fetch public community data", err);
+        console.error("Failed to fetch public community data:", err);
+        // Fallback or silent fail for landing page
       }
     };
     fetchPublic();

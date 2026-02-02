@@ -15,28 +15,42 @@ export default function CommunityClient() {
 
     React.useEffect(() => {
         const fetchPublic = async () => {
-            if (!currentUser) {
-                try {
-                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/public/community`);
-                    const data = await res.json();
-                    if (data.success) {
-                        setPublicDecisions(data.data);
-                    }
-                } catch (err) {
-                    console.error("Failed to fetch public community data", err);
+            try {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/public/community`);
+                const data = await res.json();
+                if (data.success) {
+                    setPublicDecisions(data.data);
                 }
+            } catch (err) {
+                console.error("Failed to fetch public community data", err);
             }
         };
         fetchPublic();
-    }, [currentUser]);
+    }, []);
 
-    const displayedDecisions = currentUser
-        ? decisions.filter(d => d.privacy === 'Public Community' || d.privacy === 'Anonymous Public')
-        : publicDecisions;
+    // Merge workspace public decisions with global ones
+    const displayedDecisions = React.useMemo(() => {
+        const workspacePublic = currentUser
+            ? decisions.filter(d => d.privacy === 'Public Community' || d.privacy === 'Anonymous Public')
+            : [];
+
+        // Use a Set to avoid duplicates if any
+        const seenIds = new Set(workspacePublic.map(d => d.id));
+        const combined = [...workspacePublic];
+
+        publicDecisions.forEach(d => {
+            if (!seenIds.has(d.id)) {
+                combined.push(d);
+                seenIds.add(d.id);
+            }
+        });
+
+        return combined.sort((a, b) => new Date(b.madeOn).getTime() - new Date(a.madeOn).getTime());
+    }, [currentUser, decisions, publicDecisions]);
 
     return (
-        <div className="max-w-[1600px] mx-auto space-y-10 pb-20">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[#30363d] pb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 pb-20">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/5 pb-8">
                 <div className="py-2">
                     <h2 className="text-5xl font-black tracking-tighter text-white">Community</h2>
                     <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] mt-2">Global decision intelligence</p>
