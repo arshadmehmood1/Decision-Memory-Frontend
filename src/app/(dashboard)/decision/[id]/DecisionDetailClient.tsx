@@ -7,30 +7,31 @@ import { Badge } from '@/components/ui/Badge';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/Card';
 import {
     Calendar,
-    User,
     ArrowLeft,
     Edit3,
+    User,
+    Shield,
     CheckCircle2,
     XCircle,
     RotateCcw,
-    AlertCircle,
-    Clock,
-    Zap,
-    Brain,
-    Shield,
-    Target,
-    ArrowRight,
-    TrendingUp,
-    MessageSquare,
-    ChevronRight,
-    Sparkles,
-    EyeOff,
-    Flag,
-    MessageCircle,
     Send,
-    BrainCircuit,
+    EyeOff,
+    Check,
+    Shuffle,
+    Eye,
+    Activity,
+    ShieldCheck,
+    Clock,
+    Target,
+    Brain,
+    Zap,
     Download,
-    ShieldCheck
+    ChevronRight,
+    BrainCircuit,
+    MessageCircle,
+    AlertCircle,
+    TrendingUp,
+    CheckCircle
 } from 'lucide-react';
 import { Textarea } from '@/components/ui/Textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/Avatar';
@@ -327,6 +328,40 @@ export default function DecisionDetailClient() {
                                         </div>
                                     </div>
                                 )}
+
+                                {decision.successCriteria.length > 0 && (
+                                    <div className="space-y-6 pt-8">
+                                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2"><CheckCircle size={14} className="text-success" />04. Success Protocol</h3>
+                                        <div className="grid gap-4">
+                                            {decision.successCriteria.map((s, idx) => (
+                                                <div key={idx} className="p-6 bg-success/5 border border-success/10 rounded-2xl flex items-center gap-4 group">
+                                                    <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center text-success shrink-0"><Check size={16} strokeWidth={3} /></div>
+                                                    <p className="text-sm font-bold text-gray-200">{s.value}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {decision.alternatives.length > 0 && (
+                                    <div className="space-y-6 pt-8">
+                                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2"><Shuffle size={14} className="text-amber-500" />05. Rejected Futures</h3>
+                                        <div className="grid gap-6">
+                                            {decision.alternatives.map((alt, idx) => (
+                                                <div key={idx} className="p-8 bg-white/5 border border-white/10 rounded-[2rem] space-y-4 group hover:bg-white/[0.07] transition-all">
+                                                    <div className="flex items-center gap-3">
+                                                        <Badge className="bg-amber-500/10 text-amber-500 font-black text-[9px] uppercase tracking-widest">ALTERNATIVE</Badge>
+                                                        <h4 className="text-lg font-black text-white">{alt.name}</h4>
+                                                    </div>
+                                                    <div className="pl-4 border-l-2 border-amber-500/20">
+                                                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Reason for Rejection</p>
+                                                        <p className="text-sm text-gray-400 font-bold italic">{alt.whyRejected}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -341,6 +376,41 @@ export default function DecisionDetailClient() {
                                         </div>
                                         <span className="font-black text-white text-base tracking-tight">{decision.madeBy}</span>
                                     </div>
+
+                                    <div className="w-full h-px bg-white/5" />
+
+                                    <div className="flex items-center justify-between group cursor-default">
+                                        <div className="flex items-center gap-4 text-gray-500 group-hover:text-blue-400 transition-colors">
+                                            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-500 group-hover:bg-blue-400/10 group-hover:text-blue-400 transition-colors border border-white/10"><Eye size={16} /></div>
+                                            <span className="text-[11px] font-black uppercase tracking-[0.2em]">Privacy</span>
+                                        </div>
+                                        <Badge variant="outline" className="border-white/10 bg-white/5 text-[9px] font-black uppercase tracking-widest">{decision.privacy}</Badge>
+                                    </div>
+
+                                    {decision.aiRiskScore && (
+                                        <div className="flex items-center justify-between group cursor-default">
+                                            <div className="flex items-center gap-4 text-gray-500 group-hover:text-red-500 transition-colors">
+                                                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-500 group-hover:bg-red-500/10 group-hover:text-red-500 transition-colors border border-white/10"><Activity size={16} /></div>
+                                                <span className="text-[11px] font-black uppercase tracking-[0.2em]">Neural Risk</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-16 h-1.5 rounded-full bg-white/5 overflow-hidden">
+                                                    <div className="h-full bg-gradient-to-r from-green-500 to-red-500" style={{ width: `${decision.aiRiskScore}%` }} />
+                                                </div>
+                                                <span className="font-black text-xs text-white">{decision.aiRiskScore}%</span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {decision.reviewDeadline && (
+                                        <div className="flex items-center justify-between group cursor-default">
+                                            <div className="flex items-center gap-4 text-gray-500 group-hover:text-amber-500 transition-colors">
+                                                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-500 group-hover:bg-amber-500/10 group-hover:text-amber-500 transition-colors border border-white/10"><Clock size={16} /></div>
+                                                <span className="text-[11px] font-black uppercase tracking-[0.2em]">Audit Due</span>
+                                            </div>
+                                            <span className="font-black text-xs text-amber-500">{formatDate(decision.reviewDeadline)}</span>
+                                        </div>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>
