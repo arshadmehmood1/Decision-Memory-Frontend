@@ -159,12 +159,12 @@ export function WhatsNewButton({ onClick, hasNew }: { onClick: () => void; hasNe
     return (
         <button
             onClick={onClick}
-            className="relative p-2 rounded-xl bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all"
-            title="What's New"
+            className="relative px-3 py-2 rounded-xl bg-white/5 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-white hover:bg-white/10 transition-all flex items-center gap-2 group"
         >
-            <Bell size={18} />
+            <Sparkles size={14} className="text-primary group-hover:animate-pulse" />
+            <span>What&apos;s New</span>
             {hasNew && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full animate-pulse" />
+                <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
             )}
         </button>
     );
