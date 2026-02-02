@@ -58,7 +58,7 @@ export default function CMSClient() {
 
     const loadRoadmap = async () => {
         try {
-            const res = await apiRequest<{ data: any[] }>('/api/admin/updates');
+            const res = await apiRequest<{ data: any[] }>('/admin/updates');
             setVersions(res.data);
         } catch (err) {
             console.error(err);
@@ -68,7 +68,7 @@ export default function CMSClient() {
 
     const loadVersions = async () => {
         try {
-            const res = await apiRequest<{ data: any[] }>('/api/admin/cms/versions');
+            const res = await apiRequest<{ data: any[] }>('/admin/cms/versions');
             setVersions(res.data);
         } catch (err) {
             console.error(err);
@@ -78,11 +78,11 @@ export default function CMSClient() {
     const handleApprove = async (id: string) => {
         try {
             if (activeTab === 'ROADMAP') {
-                await apiRequest(`/api/admin/updates/${id}/approve`, { method: 'POST' });
+                await apiRequest(`/admin/updates/${id}/approve`, { method: 'POST' });
                 toast.success("Roadmap feature deployed successfully.");
                 loadRoadmap();
             } else {
-                await apiRequest('/api/admin/cms/approve', {
+                await apiRequest('/admin/cms/approve', {
                     method: 'POST',
                     body: JSON.stringify({ id })
                 });
@@ -98,11 +98,11 @@ export default function CMSClient() {
     const handleTerminate = async (id: string) => {
         try {
             if (activeTab === 'ROADMAP') {
-                await apiRequest(`/api/admin/updates/${id}/archive`, { method: 'POST' });
+                await apiRequest(`/admin/updates/${id}/archive`, { method: 'POST' });
                 toast.success("Feature archived in roadmap.");
                 loadRoadmap();
             } else {
-                await apiRequest(`/api/admin/cms/version/${id}`, { method: 'DELETE' });
+                await apiRequest(`/admin/cms/version/${id}`, { method: 'DELETE' });
                 toast.success("Version terminated. Neural link severed.");
                 loadVersions();
             }
@@ -114,7 +114,7 @@ export default function CMSClient() {
 
     const handlePreview = async (id: string) => {
         try {
-            const endpoint = activeTab === 'ROADMAP' ? `/api/admin/updates/${id}` : `/api/admin/cms/version/${id}`;
+            const endpoint = activeTab === 'ROADMAP' ? `/admin/updates/${id}` : `/admin/cms/version/${id}`;
             const res = await apiRequest<{ data: any }>(endpoint);
             setShowPreview(res.data);
         } catch (err) {
@@ -125,7 +125,7 @@ export default function CMSClient() {
 
     const handleRollback = async (id: string) => {
         try {
-            await apiRequest(`/api/admin/cms/rollback/${id}`, { method: 'POST' });
+            await apiRequest(`/admin/cms/rollback/${id}`, { method: 'POST' });
             toast.success("Rolled back to selected version.");
             loadVersions();
             setShowRollbackLog(false);

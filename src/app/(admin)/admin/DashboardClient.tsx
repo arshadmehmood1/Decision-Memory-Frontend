@@ -56,7 +56,7 @@ export default function DashboardClient() {
 
     const loadStats = async () => {
         try {
-            const res = await apiRequest<{ data: AdminStats }>('/api/admin/stats');
+            const res = await apiRequest<{ data: AdminStats }>('/admin/stats');
             setStats(res.data);
         } catch (err) {
             console.error(err);
@@ -69,7 +69,7 @@ export default function DashboardClient() {
     const handlePurgeCache = async () => {
         setIsPurging(true);
         try {
-            await apiRequest('/api/admin/system/purge-cache', { method: 'POST' });
+            await apiRequest('/admin/system/purge-cache', { method: 'POST' });
             toast.success("Global CDN matrix cleared.");
         } catch (err) {
             toast.error("Purge failed. Matrix persists.");
@@ -80,7 +80,7 @@ export default function DashboardClient() {
 
     const handleToggleSystem = async () => {
         try {
-            await apiRequest('/api/admin/system/toggle-maintenance', { method: 'POST' });
+            await apiRequest('/admin/system/toggle-maintenance', { method: 'POST' });
             toast.success("System status synchronized.");
             loadStats();
         } catch (err) {

@@ -760,13 +760,13 @@ export const useStore = create<UserStore>()(
 
                     if (currentUser?.role === 'ADMIN') {
                         // Admin: fetch all flags from the database
-                        const res = await apiRequest<{ data: { featureKey: string, isEnabled: boolean }[] }>('/api/admin/feature');
+                        const res = await apiRequest<{ data: { featureKey: string, isEnabled: boolean }[] }>('/admin/feature');
                         res.data.forEach(f => {
                             flags[f.featureKey] = f.isEnabled;
                         });
                     } else {
                         // Regular user: fetch only live roadmap features
-                        const res = await apiRequest<{ data: { featureKey: string | null }[] }>('/api/updates');
+                        const res = await apiRequest<{ data: { featureKey: string | null }[] }>('/updates');
                         res.data.forEach(update => {
                             if (update.featureKey) {
                                 flags[update.featureKey] = true;
