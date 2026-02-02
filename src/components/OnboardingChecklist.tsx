@@ -109,86 +109,84 @@ export function OnboardingChecklist() {
 
     return (
         <motion.div
-            initial={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent backdrop-blur-sm"
+            className="relative overflow-hidden rounded-xl sm:rounded-2xl border border-white/5 bg-white/5 backdrop-blur-sm shadow-soft"
         >
-            {/* Background decoration */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-400/5 via-transparent to-transparent pointer-events-none" />
-
             <div className="relative p-6">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400">
-                            🎯
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-glow">
+                            <Sparkles size={20} />
                         </div>
                         <div>
-                            <h3 className="text-sm font-bold text-white">Get Started Checklist</h3>
-                            <p className="text-xs text-white/50">Complete these to unlock your full potential</p>
+                            <h3 className="text-sm font-black text-white uppercase tracking-widest leading-none mb-1">Onboarding Checklist</h3>
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Complete these to achieve institutional memory</p>
                         </div>
                     </div>
                     <button
                         onClick={() => setShowConfirm(true)}
-                        className="p-1.5 text-white/30 hover:text-white/60 transition-colors rounded-lg hover:bg-white/5"
+                        className="p-2 text-gray-600 hover:text-white transition-colors rounded-lg hover:bg-white/5"
                     >
                         <X size={16} />
                     </button>
                 </div>
 
                 {/* Progress bar */}
-                <div className="mb-4">
-                    <div className="flex items-center justify-between text-xs mb-2">
-                        <span className="text-amber-400 font-bold">{completedCount}/{items.length} Complete</span>
-                        <span className="text-white/40">{Math.round(progress)}%</span>
+                <div className="mb-8">
+                    <div className="flex items-center justify-between mb-2">
+                        <span className="text-[10px] font-black text-primary uppercase tracking-widest">{completedCount}/{items.length} Tasks Fixed</span>
+                        <span className="text-[10px] font-black text-gray-500 tracking-widest">{Math.round(progress)}%</span>
                     </div>
-                    <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5">
                         <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${progress}%` }}
                             transition={{ duration: 0.5, ease: 'easeOut' }}
-                            className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full"
+                            className="h-full bg-primary shadow-glow rounded-full"
                         />
                     </div>
                 </div>
 
                 {/* Checklist items */}
-                <div className="space-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {items.map((item, index) => (
                         <motion.button
                             key={item.id}
                             onClick={item.action}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.1 }}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
                             className={cn(
-                                "w-full flex items-center gap-3 p-3 rounded-xl transition-all group text-left",
+                                "flex items-center gap-4 p-4 rounded-xl transition-all group text-left border relative overflow-hidden",
                                 item.isComplete
-                                    ? "bg-green-500/10 border border-green-500/20"
-                                    : "bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10"
+                                    ? "bg-green-500/5 border-green-500/10 opacity-60"
+                                    : "bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10"
                             )}
                         >
                             <div className={cn(
-                                "w-6 h-6 rounded-lg flex items-center justify-center shrink-0 transition-colors",
+                                "w-6 h-6 rounded-lg flex items-center justify-center shrink-0 transition-all",
                                 item.isComplete
-                                    ? "bg-green-500 text-white"
-                                    : "bg-white/10 text-white/40 group-hover:text-white"
+                                    ? "bg-green-500 text-black"
+                                    : "bg-white/5 text-gray-500 group-hover:bg-primary/20 group-hover:text-primary"
                             )}>
-                                {item.isComplete ? <Check size={14} /> : item.icon}
+                                {item.isComplete ? <Check size={14} strokeWidth={3} /> : item.icon}
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className={cn(
-                                    "text-sm font-medium truncate",
-                                    item.isComplete ? "text-green-400 line-through" : "text-white"
+                                    "text-xs font-black uppercase tracking-tight",
+                                    item.isComplete ? "text-green-500/80" : "text-white group-hover:text-primary transition-colors"
                                 )}>
                                     {item.title}
                                 </p>
-                                <p className="text-xs text-white/40 truncate">{item.description}</p>
+                                <p className="text-[10px] font-bold text-gray-500 truncate mt-0.5">{item.description}</p>
                             </div>
                             {!item.isComplete && (
-                                <ChevronRight size={16} className="text-white/20 group-hover:text-white/60 transition-colors shrink-0" />
+                                <ChevronRight size={14} className="text-gray-600 group-hover:text-primary transition-colors shrink-0" />
                             )}
+                            {item.isComplete && <div className="absolute top-0 right-0 w-8 h-8 bg-green-500/10 rounded-bl-2xl flex items-start justify-end p-1.5"><Check size={8} className="text-green-500" /></div>}
                         </motion.button>
                     ))}
                 </div>

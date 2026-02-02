@@ -49,15 +49,13 @@ export default function DashboardLayout({
             <OnboardingGuide />
 
             {/* Main Content Area - Full Width */}
-            <AnimatePresence mode="wait">
+            <div className="relative z-10">
                 {mounted && isAuthReady ? (
                     <motion.main
-                        key={pathname}
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -5 }}
-                        transition={{ duration: 0.3, ease: 'easeOut' }}
-                        className="pt-8 pb-8 px-4 md:px-8 relative z-10"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.2 }}
+                        className="pt-8 pb-8 px-4 md:px-8"
                     >
                         <div className="max-w-[1600px] mx-auto">
                             <ErrorBoundary>
@@ -70,7 +68,7 @@ export default function DashboardLayout({
                         <div className="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
                     </div>
                 )}
-            </AnimatePresence>
+            </div>
         </div>
     );
 }

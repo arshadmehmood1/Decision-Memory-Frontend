@@ -28,19 +28,15 @@ export default function MarketingLayout({
 
             <MarketingNavbarWrapper />
 
-            <AnimatePresence mode="wait">
-                <motion.main
-                    key={pathname}
-                    initial={{ opacity: 0, scale: 0.99, y: 5 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 1.01, y: -5 }}
-                    transition={{ duration: 0.3, ease: "easeOut" }}
-                    className="flex-1 pt-20 relative z-10"
-                >
-                    {children}
-                    <Footer />
-                </motion.main>
-            </AnimatePresence>
+            <motion.main
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2 }}
+                className="flex-1 pt-20 relative z-10"
+            >
+                {children}
+                <Footer />
+            </motion.main>
         </div>
     );
 }
