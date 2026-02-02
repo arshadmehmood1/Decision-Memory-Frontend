@@ -41,7 +41,7 @@ export function Footer() {
                     <div>
                         <h4 className="text-sm font-black uppercase tracking-widest text-white mb-6">Company</h4>
                         <ul className="space-y-4">
-                            {['About', 'Careers', 'Contact'].map((item) => (
+                            {['About', 'Contact'].map((item) => (
                                 <li key={item}>
                                     {item === 'Contact' ? (
                                         <a href="mailto:support@decisionmemory.com" className="text-blue-400 hover:text-white transition-colors font-bold">{item}</a>
