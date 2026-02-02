@@ -23,6 +23,16 @@ import { cn } from '@/lib/utils';
 import { useStore } from '@/lib/store';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DynamicExperience } from '@/components/dashboard/DynamicExperience';
+import { SummaryDashboard } from '@/components/dashboard/SummaryDashboard';
+import { RegretNudge } from '@/components/dashboard/RegretNudge';
+import { DEMO_DECISION } from '@/lib/demo-data';
+import { toast } from 'sonner';
+import { TimelineView } from '@/components/dashboard/TimelineView';
+import { LayoutList, StretchHorizontal, BarChart3 } from 'lucide-react';
+import { StreakBadge } from '@/components/dashboard/StreakBadge';
+import { MonthlyReportModal } from '@/components/dashboard/MonthlyReportModal';
+import { calculateStreak } from '@/lib/streak-utils';
+import { generateMonthlyReport } from '@/lib/report-utils';
 
 const CATEGORIES = ['ALL', 'TECH', 'HIRING', 'MARKETING', 'SALES', 'STRATEGIC'];
 
@@ -33,7 +43,17 @@ export default function DashboardClient() {
     const [selectedOwner, setSelectedOwner] = useState('ALL');
     const [isFilterVisible, setIsFilterVisible] = useState(false);
     const [showOnboarding, setShowOnboarding] = useState(true);
-    const { decisions, currentUser } = useStore();
+    const [isTimelineView, setIsTimelineView] = useState(false);
+    const [isReportOpen, setIsReportOpen] = useState(false);
+
+    const { decisions, currentUser, addDecision, featureFlags } = useStore();
+
+    const streak = useMemo(() => calculateStreak(decisions), [decisions]);
+
+    const monthlyReport = useMemo(() => {
+        const now = new Date();
+        return generateMonthlyReport(decisions, now.getMonth(), now.getFullYear());
+    }, [decisions]);
 
     // Stats calculation moved to Insights
 
@@ -65,6 +85,17 @@ export default function DashboardClient() {
         ];
     }, [decisions]);
 
+    const handleLoadDemo = async () => {
+        try {
+            await addDecision(DEMO_DECISION as any);
+            toast.success('Demo decision loaded!', {
+                description: 'Explore the details to see a perfect decision record.'
+            });
+        } catch (error) {
+            toast.error('Failed to load demo data');
+        }
+    };
+
     return (
         <div className="space-y-12 pb-24 max-w-[1600px] mx-auto">
             {/* Header Section */}
@@ -73,12 +104,15 @@ export default function DashboardClient() {
                     <h2 className="text-3xl sm:text-5xl font-black tracking-tighter text-white uppercase italic">Home</h2>
                     <p className="text-gray-400 font-black uppercase tracking-[0.2em] text-[9px] mt-1">Operational Workspace / Trace Mode</p>
                 </div>
-                <Link href="/decision/new" className="w-full sm:w-auto">
-                    <Button className="w-full h-12 sm:h-14 rounded-xl sm:rounded-2xl px-8 shadow-premium shadow-blue-500/10 hover:scale-[1.02] active:scale-95 transition-all text-sm sm:text-lg gap-3">
-                        <Plus size={18} strokeWidth={3} />
-                        New Decision
-                    </Button>
-                </Link>
+                <div className="flex items-center gap-6">
+                    {featureFlags.decision_streaks && <StreakBadge streak={streak} />}
+                    <Link href="/decision/new" className="w-full sm:w-auto">
+                        <Button className="w-full h-12 sm:h-14 rounded-xl sm:rounded-2xl px-8 shadow-premium shadow-blue-500/10 hover:scale-[1.02] active:scale-95 transition-all text-sm sm:text-lg gap-3">
+                            <Plus size={18} strokeWidth={3} />
+                            New Decision
+                        </Button>
+                    </Link>
+                </div>
             </div>
 
             {/* Quick Stats Summary Bar */}
@@ -101,10 +135,37 @@ export default function DashboardClient() {
                         </Card>
                     </motion.div>
                 ))}
+
+                {/* Monthly Report Action */}
+                {featureFlags.monthly_report && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                    >
+                        <button
+                            onClick={() => setIsReportOpen(true)}
+                            className="w-full h-full p-4 sm:p-5 border border-primary/20 bg-primary/5 rounded-xl sm:rounded-2xl flex items-center justify-between group hover:bg-primary/10 transition-all text-left"
+                        >
+                            <div className="space-y-0.5">
+                                <div className="text-[9px] font-black text-primary uppercase tracking-widest">Decision Analytics</div>
+                                <div className="text-xl sm:text-2xl font-black text-white tracking-tight">Monthly Report</div>
+                            </div>
+                            <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-primary text-white shadow-glow">
+                                <BarChart3 size={18} className="sm:size-5" />
+                            </div>
+                        </button>
+                    </motion.div>
+                )}
             </div>
 
+            {featureFlags.regret_nudge && <RegretNudge />}
+
             {/* Admin Approved Dynamic Experience */}
-            <DynamicExperience />
+            {featureFlags.dynamic_experience && <DynamicExperience />}
+
+            {/* Premium Analytics Dashboard */}
+            {featureFlags.success_dashboard && <SummaryDashboard />}
 
             {/* Onboarding Checklist */}
             <AnimatePresence>
@@ -210,6 +271,23 @@ export default function DashboardClient() {
                             <ArrowUpDown size={14} strokeWidth={3} />
                             Sorted by Newest First
                         </Button>
+                        <div className="w-px h-4 bg-white/10" />
+                        {featureFlags.timeline_view && (
+                            <div className="flex bg-white/5 rounded-lg p-1 border border-white/5">
+                                <button
+                                    onClick={() => setIsTimelineView(false)}
+                                    className={cn("p-1.5 rounded-md transition-all", !isTimelineView ? "bg-white/10 text-white shadow-sm" : "text-gray-500 hover:text-gray-300")}
+                                >
+                                    <LayoutList size={16} />
+                                </button>
+                                <button
+                                    onClick={() => setIsTimelineView(true)}
+                                    className={cn("p-1.5 rounded-md transition-all", isTimelineView ? "bg-white/10 text-white shadow-sm" : "text-gray-500 hover:text-gray-300")}
+                                >
+                                    <StretchHorizontal size={16} />
+                                </button>
+                            </div>
+                        )}
                     </div>
                     <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-4 md:block hidden">
                         Showing <span className="text-white font-black">{filteredDecisions.length}</span> results found
@@ -328,48 +406,69 @@ export default function DashboardClient() {
             </div>
 
             {/* Decisions List Section */}
-            <div className="space-y-6">
-                <div className="grid grid-cols-1 gap-6">
-                    {filteredDecisions.length > 0 ? (
-                        filteredDecisions.map((decision, idx) => (
-                            <motion.div
-                                key={decision.id}
-                                initial={{ opacity: 0, scale: 0.98, y: 10 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                transition={{ delay: idx * 0.05 }}
-                            >
-                                <DecisionCard decision={decision} />
-                            </motion.div>
-                        ))
-                    ) : (
-                        <div className="flex flex-col items-center justify-center py-40 bg-white/5 rounded-[3rem] border-2 border-dashed border-white/10">
-                            <div className="w-24 h-24 bg-black rounded-[2rem] shadow-premium flex items-center justify-center text-gray-700 mb-8 border border-white/10 scale-110 group-hover:rotate-12 transition-transform">
-                                <Search size={48} />
-                            </div>
-                            <h3 className="text-2xl font-black text-white mb-2">Zero Choices Found</h3>
-                            <p className="text-gray-400 max-w-xs text-center font-bold">Try adjusting your filters or <br />start a fresh decision log.</p>
-                            {(search || selectedCategory !== 'ALL') && (
-                                <Button
-                                    variant="outline"
-                                    className="mt-10 rounded-2xl h-14 px-8 text-lg hover:bg-white"
-                                    onClick={() => { setSearch(''); setSelectedCategory('ALL'); }}
+            {isTimelineView ? (
+                <TimelineView />
+            ) : (
+                <div className="space-y-6">
+                    <div className="grid grid-cols-1 gap-6">
+                        {filteredDecisions.length > 0 ? (
+                            filteredDecisions.map((decision, idx) => (
+                                <motion.div
+                                    key={decision.id}
+                                    initial={{ opacity: 0, scale: 0.98, y: 10 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    transition={{ delay: idx * 0.05 }}
                                 >
-                                    Reset Filters
-                                </Button>
-                            )}
+                                    <DecisionCard decision={decision} />
+                                </motion.div>
+                            ))
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-40 bg-white/5 rounded-[3rem] border-2 border-dashed border-white/10">
+                                <div className="w-24 h-24 bg-black rounded-[2rem] shadow-premium flex items-center justify-center text-gray-700 mb-8 border border-white/10 scale-110 group-hover:rotate-12 transition-transform">
+                                    <Search size={48} />
+                                </div>
+                                <h3 className="text-2xl font-black text-white mb-2">Zero Choices Found</h3>
+                                <p className="text-gray-400 max-w-xs text-center font-bold mb-8">Try adjusting your filters or <br />start a fresh decision log.</p>
+
+                                <div className="flex gap-4">
+                                    {(search || selectedCategory !== 'ALL') ? (
+                                        <Button
+                                            variant="outline"
+                                            className="rounded-2xl h-14 px-8 text-lg hover:bg-white"
+                                            onClick={() => { setSearch(''); setSelectedCategory('ALL'); }}
+                                        >
+                                            Reset Filters
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            variant="outline"
+                                            onClick={handleLoadDemo}
+                                            className="rounded-2xl h-14 px-8 text-sm font-black uppercase tracking-widest hover:bg-white/10 border-white/20"
+                                        >
+                                            Load Demo Example
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {filteredDecisions.length > 8 && (
+                        <div className="flex justify-center pt-10">
+                            <Button variant="outline" className="rounded-2xl h-14 px-10 text-lg bg-white shadow-soft transition-all hover:shadow-premium group">
+                                Explore Archive History
+                                <ChevronRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+                            </Button>
                         </div>
                     )}
                 </div>
-
-                {filteredDecisions.length > 8 && (
-                    <div className="flex justify-center pt-10">
-                        <Button variant="outline" className="rounded-2xl h-14 px-10 text-lg bg-white shadow-soft transition-all hover:shadow-premium group">
-                            Explore Archive History
-                            <ChevronRight className="ml-2 group-hover:translate-x-1 transition-transform" />
-                        </Button>
-                    </div>
-                )}
-            </div>
+            )}
+            {/* Modal Components */}
+            <MonthlyReportModal
+                isOpen={isReportOpen}
+                onClose={() => setIsReportOpen(false)}
+                data={monthlyReport}
+            />
         </div>
     );
 }

@@ -8,12 +8,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/lib/store';
 import { OnboardingGuide } from '@/components/OnboardingGuide';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 
 export default function DashboardLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
+    useKeyboardShortcuts();
     const { currentUser, fetchWorkspaces, fetchDecisions, currentWorkspaceId, workspaces, isLoading, isAuthReady } = useStore();
     const [mounted, setMounted] = React.useState(false);
 

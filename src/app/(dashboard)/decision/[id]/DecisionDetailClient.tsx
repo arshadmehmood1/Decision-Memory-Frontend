@@ -42,6 +42,8 @@ import { formatDate, cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore, Decision } from '@/lib/store';
 import { toast } from 'sonner';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const statusVariants: Record<string, any> = {
     ACTIVE: 'warning',
@@ -54,7 +56,8 @@ const statusVariants: Record<string, any> = {
 export default function DecisionDetailClient() {
     const params = useParams();
     const router = useRouter();
-    const { decisions, updateDecisionStatus, currentUser, addComment, analyzeBlindspots, checkAssumption, fetchComments } = useStore();
+    const { decisions, updateDecisionStatus, currentUser, addComment, analyzeBlindspots, checkAssumption, fetchComments, featureFlags } = useStore();
+    const contentRef = React.useRef<HTMLDivElement>(null);
     const [showOutcomeFlow, setShowOutcomeFlow] = useState(false);
     const [activeTab, setActiveTab] = useState<'trace' | 'reviews'>('trace');
     const [newComment, setNewComment] = useState('');
@@ -139,6 +142,40 @@ export default function DecisionDetailClient() {
         toast.success("Review Logged", { description: isAnonymousReview ? "Your anonymous feedback has been encrypted." : "Your review is now visible to the workspace." });
     };
 
+    const handleExportPDF = async () => {
+        if (!contentRef.current || !decision) return;
+
+        setIsAnalyzing(true);
+        toast.info("Generating professional report...", { description: "Applying high-fidelity layout engine to neural trace." });
+
+        try {
+            const canvas = await html2canvas(contentRef.current, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#0d1117',
+                logging: false,
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            // Standard A4 is approx 595x842 points. We'll size to match our canvas aspect.
+            const pdf = new jsPDF({
+                orientation: canvas.width > canvas.height ? 'l' : 'p',
+                unit: 'px',
+                format: [canvas.width, canvas.height]
+            });
+
+            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+            pdf.save(`Strategic-Trace-${decision.id.substring(0, 8)}.pdf`);
+
+            toast.success("Export Complete", { description: "Professional report saved." });
+        } catch (err) {
+            console.error("PDF Export failed", err);
+            toast.error("Export Failed", { description: "Failed to render visual trace to PDF." });
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
+
     return (
         <div className="max-w-6xl mx-auto pb-32 space-y-12">
             <div className="flex items-center justify-between px-4">
@@ -171,6 +208,16 @@ export default function DecisionDetailClient() {
                         <h1 className="text-5xl md:text-6xl font-black text-white leading-[1.1] tracking-tighter max-w-4xl">{decision.title}</h1>
                     </div>
                     <div className="flex gap-4 w-full md:w-auto">
+                        {featureFlags.pdf_reports && (
+                            <Button
+                                onClick={handleExportPDF}
+                                disabled={isAnalyzing}
+                                variant="outline"
+                                className="flex-1 md:flex-none h-14 px-8 rounded-2xl border-white/10 bg-white/5 hover:bg-white/10 shadow-soft font-black text-xs uppercase tracking-widest transition-all active:scale-90 text-indigo-400"
+                            >
+                                <Download size={18} className="mr-2" />Report
+                            </Button>
+                        )}
                         <Link href={`/decision/${decision.id}/edit`}>
                             <Button variant="outline" className="flex-1 md:flex-none h-14 px-8 rounded-2xl border-white/10 bg-white/5 hover:bg-white/10 shadow-soft font-black text-xs uppercase tracking-widest transition-all active:scale-90 text-white">
                                 <Edit3 size={18} className="mr-2" />Edit Trace
@@ -194,7 +241,7 @@ export default function DecisionDetailClient() {
             </div>
 
             {activeTab === 'trace' ? (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div ref={contentRef} className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="lg:col-span-8 space-y-16">
                         <div className="relative pl-12 border-l-4 border-dashed border-white/5 py-4">
                             <div className="absolute -left-[14px] top-0 w-6 h-6 rounded-full bg-primary shadow-glow border-4 border-black z-10" />

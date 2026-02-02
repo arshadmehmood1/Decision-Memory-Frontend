@@ -2,9 +2,11 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { ChevronRight, MessageSquare, EyeOff } from 'lucide-react';
+import { ChevronRight, MessageSquare, EyeOff, Copy, RefreshCw } from 'lucide-react';
 import { formatDate, cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { useStore } from '@/lib/store';
+import { toast } from 'sonner';
 
 interface DecisionCardProps {
     decision: {
@@ -18,10 +20,15 @@ interface DecisionCardProps {
         tags?: string[];
         decision?: string;
         comments?: any[];
+        context?: string;
+        alternatives?: any[];
+        assumptions?: any[];
+        successCriteria?: any[];
     };
 }
 
 export function DecisionCard({ decision }: DecisionCardProps) {
+    const { updateDecisionStatus, addDecision, featureFlags } = useStore();
     const isAnonymous = decision.privacy === 'Anonymous Public';
     const isCritical = (decision as any).aiRiskScore >= 80 || (decision as any).riskLevel === 'CRITICAL';
 
@@ -31,6 +38,35 @@ export function DecisionCard({ decision }: DecisionCardProps) {
         FAILED: 'danger',
         REVERSED: 'danger',
         DRAFT: 'secondary',
+    };
+
+    const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const newStatus = e.target.value as any;
+        await updateDecisionStatus(decision.id, newStatus);
+        toast.success(`Status updated to ${newStatus}`);
+    };
+
+    const handleDuplicate = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+            await addDecision({
+                title: `Copy of ${decision.title}`,
+                category: decision.category,
+                decision: decision.decision || '',
+                context: decision.context || '',
+                alternatives: decision.alternatives || [],
+                assumptions: decision.assumptions || [],
+                successCriteria: decision.successCriteria || [],
+                privacy: 'This Workspace',
+                tags: decision.tags || []
+            });
+            toast.success('Decision duplicated to Drafts');
+        } catch (error) {
+            toast.error('Failed to duplicate decision');
+        }
     };
 
     return (
@@ -53,7 +89,7 @@ export function DecisionCard({ decision }: DecisionCardProps) {
                 />
             )}
 
-            <Link href={`/decision/${decision.id}`}>
+            <Link href={`/decision/${decision.id}`} className="block">
                 <div className={cn(
                     "group relative z-10 flex flex-col md:flex-row gap-6 md:gap-4 items-start md:items-center justify-between p-5 sm:p-8 rounded-2xl sm:rounded-[2rem] border transition-all duration-500 overflow-hidden",
                     isCritical
@@ -63,14 +99,34 @@ export function DecisionCard({ decision }: DecisionCardProps) {
                     {/* Interior Neural Flux Decor */}
                     <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-2xl" />
 
-                    <div className="flex-1 space-y-4">
+                    <div className="flex-1 space-y-4 relative z-20">
                         <div className="flex items-center flex-wrap gap-2 sm:gap-3">
                             <Badge variant="info" className="h-6 sm:h-7 px-2 sm:px-3 text-[9px] sm:text-[10px] font-black tracking-widest uppercase bg-blue-500/10 border-blue-500/20 text-blue-400">
                                 {decision.category}
                             </Badge>
-                            <Badge variant={statusVariants[decision.status] || 'default'} className="h-6 sm:h-7 px-2 sm:px-3 text-[9px] sm:text-[10px] font-black uppercase tracking-widest bg-opacity-10 border-opacity-20 shadow-inner">
-                                {decision.status}
-                            </Badge>
+
+                            {/* Interactive Status Badge */}
+                            <div className="relative group/status" onClick={(e) => e.preventDefault()}>
+                                <Badge variant={statusVariants[decision.status] || 'default'} className={cn("h-6 sm:h-7 px-2 sm:px-3 text-[9px] sm:text-[10px] font-black uppercase tracking-widest bg-opacity-10 border-opacity-20 shadow-inner hover:bg-opacity-20 transition-all flex items-center gap-1", featureFlags.quick_status && "cursor-pointer")}>
+                                    {decision.status}
+                                    {featureFlags.quick_status && <RefreshCw size={8} className="ml-1 opacity-0 group-hover/status:opacity-100 transition-opacity" />}
+                                </Badge>
+                                {featureFlags.quick_status && (
+                                    <select
+                                        value={decision.status}
+                                        onChange={handleStatusChange}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer text-[16px]" // 16px prevents iOS zoom
+                                    >
+                                        <option value="DRAFT">DRAFT</option>
+                                        <option value="ACTIVE">ACTIVE</option>
+                                        <option value="SUCCEEDED">SUCCEEDED</option>
+                                        <option value="FAILED">FAILED</option>
+                                        <option value="REVERSED">REVERSED</option>
+                                    </select>
+                                )}
+                            </div>
+
                             {isCritical && (
                                 <Badge className="h-6 sm:h-7 px-2 sm:px-3 text-[9px] sm:text-[10px] font-black uppercase tracking-widest bg-red-500 text-white shadow-glow animate-pulse">
                                     Risk
@@ -99,7 +155,7 @@ export function DecisionCard({ decision }: DecisionCardProps) {
                         </div>
                     </div>
 
-                    <div className="flex items-center justify-between md:justify-end gap-4 sm:gap-8 w-full md:w-auto pt-4 md:pt-0 md:pl-6 md:border-l md:border-white/10 md:h-16">
+                    <div className="relative z-20 flex items-center justify-between md:justify-end gap-4 sm:gap-8 w-full md:w-auto pt-4 md:pt-0 md:pl-6 md:border-l md:border-white/10 md:h-16">
                         <div className="flex items-center gap-3 sm:gap-4">
                             <div className={cn(
                                 "w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-[10px] sm:text-xs text-white font-black shadow-2xl transition-transform group-hover:scale-110",
@@ -112,7 +168,18 @@ export function DecisionCard({ decision }: DecisionCardProps) {
                                 <span className="text-[10px] sm:text-xs font-bold text-white whitespace-nowrap">{isAnonymous ? 'Anonymous' : decision.madeBy}</span>
                             </div>
                         </div>
-                        <div className="flex items-center gap-4 sm:gap-6">
+                        <div className="flex items-center gap-4">
+                            {/* Duplicate Button */}
+                            {featureFlags.duplicate_decision && (
+                                <button
+                                    onClick={handleDuplicate}
+                                    className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-colors"
+                                    title="Duplicate Decision"
+                                >
+                                    <Copy size={16} />
+                                </button>
+                            )}
+
                             <div className="flex flex-col items-center gap-0.5 group/msg">
                                 <MessageSquare size={18} className="text-gray-500 group-hover/msg:text-primary transition-colors" />
                                 <span className="text-[9px] font-black text-gray-600">{decision.comments?.length || 0}</span>

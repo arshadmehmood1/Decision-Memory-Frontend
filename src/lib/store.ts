@@ -52,6 +52,7 @@ export interface Decision {
     comments: Comment[];
     // Backend specific fields we might want to preserve
     aiRiskScore?: number;
+    links?: { id: string; type: 'RELIES_ON' | 'SUPERSEDES' | 'RELATES_TO' | 'BLOCKED_BY'; targetId: string; targetTitle: string; }[];
 }
 
 export interface Insight {
@@ -69,8 +70,14 @@ interface ApiUser {
     id: string;
     name: string;
     email: string;
+    avatar: string;
     role: 'ADMIN' | 'MEMBER' | 'VIEWER';
     hasOnboarded?: boolean;
+    preferences?: {
+        emailDigest: boolean;
+        reviewReminders: boolean;
+        marketingEmails: boolean;
+    };
 }
 
 interface ApiWorkspaceUser {
@@ -107,6 +114,7 @@ interface ApiDecision {
     successCriteria: string[];
     tags: string[];
     aiRiskScore?: number;
+    links?: { id: string; type: 'RELIES_ON' | 'SUPERSEDES' | 'RELATES_TO' | 'BLOCKED_BY'; targetId: string; targetTitle: string; }[];
 }
 
 interface ApiComment {
@@ -140,7 +148,7 @@ export interface DecisionDraft {
 
 interface UserStore {
     // Session
-    currentUser: { id: string; name: string; email: string; avatar: string; role: 'ADMIN' | 'MEMBER' | 'VIEWER'; hasOnboarded?: boolean } | null;
+    currentUser: (ApiUser & { preferences?: ApiUser['preferences'] }) | null;
     isLoading: boolean;
     error: string | null;
 
@@ -180,6 +188,7 @@ interface UserStore {
     updateDecisionStatus: (id: string, status: Decision['status']) => Promise<void>;
     addComment: (decisionId: string, content: string, isAnonymous: boolean) => Promise<void>;
     fetchComments: (decisionId: string) => Promise<void>;
+    linkDecision: (sourceId: string, targetId: string, type: 'RELIES_ON' | 'SUPERSEDES' | 'RELATES_TO' | 'BLOCKED_BY') => Promise<void>;
 
     // Prefs
     userPrefs: {
@@ -194,6 +203,7 @@ interface UserStore {
     login: (email: string, name: string) => void;
     logout: () => void;
     updateUser: (data: { name?: string; timezone?: string; hasOnboarded?: boolean }) => Promise<void>;
+    updatePreferences: (prefs: Partial<ApiUser['preferences']>) => void;
     updateWorkspace: (id: string, name: string) => Promise<void>; // Added
     fetchMe: () => Promise<void>;
 
@@ -203,6 +213,7 @@ interface UserStore {
     // Feature Flags
     featureFlags: Record<string, boolean>;
     fetchFeatureFlag: (key: string) => Promise<boolean>;
+    fetchFeatureFlags: () => Promise<void>; // New: Fetch all roadmap flags
     toggleFeatureFlag: (key: string, enabled: boolean) => Promise<void>;
 }
 
@@ -555,11 +566,38 @@ export const useStore = create<UserStore>()(
                 });
                 get().fetchMe();
                 get().fetchWorkspaces();
+                get().fetchFeatureFlags();
             },
 
             logout: () => {
                 set({ currentUser: null, decisions: [], draft: null, currentWorkspaceId: '' });
                 window.location.href = '/';
+            },
+
+            linkDecision: async (sourceId, targetId, type) => {
+                const { decisions } = get();
+                const source = decisions.find(d => d.id === sourceId);
+                const target = decisions.find(d => d.id === targetId);
+
+                if (!source || !target) return;
+
+                // Optimistic update
+                const newLink = {
+                    id: Math.random().toString(),
+                    type,
+                    targetId,
+                    targetTitle: target.title
+                };
+
+                const updatedDecisions = decisions.map(d => {
+                    if (d.id === sourceId) {
+                        return { ...d, links: [...(d.links || []), newLink] };
+                    }
+                    return d;
+                });
+
+                set({ decisions: updatedDecisions });
+                // In real app: POST /api/decisions/:id/links
             },
 
             updateUser: async (data) => {
@@ -606,6 +644,23 @@ export const useStore = create<UserStore>()(
                 }
             },
 
+            updatePreferences: (prefs) => {
+                const { currentUser } = get();
+                if (currentUser) {
+                    const updatedUser: ApiUser = {
+                        ...currentUser,
+                        preferences: {
+                            emailDigest: false,
+                            reviewReminders: false,
+                            marketingEmails: false,
+                            ...currentUser.preferences,
+                            ...prefs
+                        }
+                    };
+                    set({ currentUser: updatedUser });
+                }
+            },
+
             createCheckoutSession: async (plan) => {
                 set({ isLoading: true });
                 try {
@@ -643,6 +698,7 @@ export const useStore = create<UserStore>()(
                             avatar: (user.name || user.email).substring(0, 2).toUpperCase()
                         }
                     }));
+                    get().fetchFeatureFlags();
                 } catch (err) {
                     console.error("Failed to fetch current user", err);
                 }
@@ -694,6 +750,21 @@ export const useStore = create<UserStore>()(
                 } catch (err) {
                     console.error("Failed to fetch feature flag", key, err);
                     return false;
+                }
+            },
+
+            fetchFeatureFlags: async () => {
+                try {
+                    const res = await apiRequest<{ data: { featureKey: string | null }[] }>('/updates');
+                    const flags: Record<string, boolean> = {};
+                    res.data.forEach(update => {
+                        if (update.featureKey) {
+                            flags[update.featureKey] = true;
+                        }
+                    });
+                    set({ featureFlags: flags });
+                } catch (err) {
+                    console.error("Failed to fetch feature flags from roadmap", err);
                 }
             },
 

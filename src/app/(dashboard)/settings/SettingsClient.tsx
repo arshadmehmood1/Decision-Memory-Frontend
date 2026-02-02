@@ -7,23 +7,26 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Badge } from '@/components/ui/Badge';
-import { Settings as SettingsIcon, Bell, Lock, Users, CreditCard, Globe, Mail, Shield, Check, Save } from 'lucide-react';
+import { Settings as SettingsIcon, Bell, Lock, Users, CreditCard, Globe, Mail, Shield, Check, Save, Database, FileJson, FileSpreadsheet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { useStore } from '@/lib/store';
 import { Switch } from '@/components/ui/Switch';
+import { downloadJson, downloadCsv } from '@/lib/export-utils';
 
 const TABS = [
     { id: 'profile', title: 'Profile', icon: Users },
     { id: 'workspace', title: 'Workspace', icon: Globe },
     { id: 'notifications', title: 'Notifications', icon: Bell },
     { id: 'security', title: 'Security', icon: Lock },
+    { id: 'data', title: 'Data & Privacy', icon: Database },
     { id: 'billing', title: 'Billing', icon: CreditCard },
 ];
 
 export default function SettingsClient() {
-    const { currentUser, updateUser, updateWorkspace, createCheckoutSession, workspaces, currentWorkspaceId, isLoading: isStoreLoading } = useStore();
+    const works = useStore();
+    const { currentUser, updateUser, updatePreferences, updateWorkspace, createCheckoutSession, workspaces, currentWorkspaceId, isLoading: isStoreLoading, featureFlags } = works;
     const [activeTab, setActiveTab] = useState('profile');
     const [isLoading, setIsLoading] = useState(false);
     const [isUpgrading, setIsUpgrading] = useState(false);
@@ -158,17 +161,24 @@ export default function SettingsClient() {
                                     </CardHeader>
                                     <CardContent className="p-8 space-y-6">
                                         {[
-                                            { id: 'alerts', title: 'Decision Alerts', desc: 'Get notified when a decision reaches its review deadline.' },
-                                            { id: 'insights', title: 'AI Insights', desc: 'Receive neural analysis alerts for your workspaces.' },
-                                            { id: 'collaborator', title: 'Collaborator Activity', desc: 'Updates when team members add comments or traces.' },
-                                            { id: 'billing', title: 'Billing & Quota', desc: 'Stay informed about your plan usage and neural credits.' }
-                                        ].map((item, i) => (
+                                            { id: 'emailDigest', title: 'Weekly Digest', desc: 'Get a summary of your decision velocity and team activity.' },
+                                            { id: 'reviewReminders', title: 'Review Deadlines', desc: 'Get notified when a decision reaches its review date.' },
+                                            { id: 'marketingEmails', title: 'Product Updates', desc: 'Be the first to know about new neural features.' }
+                                        ].map((item) => (
                                             <div key={item.id} className="flex items-center justify-between p-6 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition-colors">
                                                 <div className="space-y-1">
                                                     <h4 className="text-sm font-bold text-white">{item.title}</h4>
                                                     <p className="text-xs text-gray-500">{item.desc}</p>
                                                 </div>
-                                                <Switch checked={true} onCheckedChange={() => { }} />
+                                                <Switch
+                                                    checked={currentUser?.preferences?.[item.id as keyof typeof currentUser.preferences] ?? false}
+                                                    onCheckedChange={(checked) => {
+                                                        updatePreferences({ [item.id]: checked });
+                                                        toast.success('Preference Saved', {
+                                                            description: `${item.title} has been ${checked ? 'enabled' : 'disabled'}.`
+                                                        });
+                                                    }}
+                                                />
                                             </div>
                                         ))}
                                     </CardContent>
@@ -192,6 +202,64 @@ export default function SettingsClient() {
                                             <Button variant="outline" className="rounded-xl mt-4 border-white/10 bg-white/5 text-white hover:bg-white/10">
                                                 Manage Identity Settings
                                             </Button>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {activeTab === 'data' && (
+                                <Card className="rounded-[2.5rem] border border-white/5 shadow-premium overflow-hidden bg-white/5">
+                                    <CardHeader className="border-b border-white/5 p-10">
+                                        <CardTitle className="text-2xl font-black text-white">Data Portability</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="p-8 space-y-8">
+                                        {featureFlags.data_export && (
+                                            <div className="p-8 rounded-[2rem] bg-indigo-500/5 border border-indigo-500/10 flex flex-col md:flex-row items-center justify-between gap-8">
+                                                <div className="space-y-2">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                                                            <Database size={20} />
+                                                        </div>
+                                                        <h3 className="text-xl font-black text-white">Your Data, Your Rules</h3>
+                                                    </div>
+                                                    <p className="text-gray-400 font-medium max-w-md">
+                                                        You own your decision logs. Export directly to your machine in open formats at any time. No lock-in, ever.
+                                                    </p>
+                                                </div>
+                                                <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+                                                    <Button
+                                                        onClick={() => downloadJson(works.decisions || [], `decision-memory-export-${new Date().toISOString().split('T')[0]}.json`)}
+                                                        variant="outline"
+                                                        className="h-14 rounded-2xl border-white/10 bg-white/5 hover:bg-white/10 text-white gap-3 flex-1"
+                                                    >
+                                                        <FileJson size={18} />
+                                                        Export JSON
+                                                    </Button>
+                                                    <Button
+                                                        onClick={() => downloadCsv(works.decisions || [], `decision-memory-export-${new Date().toISOString().split('T')[0]}.csv`)}
+                                                        className="h-14 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-glow shadow-indigo-500/20 gap-3 font-black uppercase tracking-widest text-xs flex-1"
+                                                    >
+                                                        <FileSpreadsheet size={18} />
+                                                        Export CSV
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="p-8 rounded-[2rem] bg-red-500/5 border border-red-500/10 space-y-6">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center">
+                                                    <Shield size={20} />
+                                                </div>
+                                                <h3 className="text-lg font-black text-white">Danger Zone</h3>
+                                            </div>
+                                            <div className="flex items-center justify-between p-6 rounded-xl bg-black/20 border border-white/5">
+                                                <div>
+                                                    <h4 className="font-bold text-white">Delete Workspace Data</h4>
+                                                    <p className="text-xs text-gray-500">Permanently remove all decisions and insights.</p>
+                                                </div>
+                                                <Button variant="danger" size="sm" className="rounded-xl">Delete All</Button>
+                                            </div>
                                         </div>
                                     </CardContent>
                                 </Card>
