@@ -507,6 +507,9 @@ export const useStore = create<UserStore>()(
                         method: 'PATCH',
                         body: JSON.stringify(payload)
                     });
+
+                    // 2. Fetch fresh data to ensure alignment (Server parsed JSONs etc)
+                    get().fetchDecisions(get().currentWorkspaceId);
                 } catch (err) {
                     console.error("Failed to update decision - Rolling back Protocol", err);
                     // 2. Rollback on Failure

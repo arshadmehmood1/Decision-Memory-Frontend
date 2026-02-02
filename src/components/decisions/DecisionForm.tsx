@@ -247,20 +247,30 @@ export function DecisionForm({ initialData, isEditing, decisionId }: DecisionFor
         }
     };
 
-    const onSubmit = (data: DecisionFormValues) => {
-        if (isEditing && decisionId) {
-            updateDecision(decisionId, data);
-            toast.success('Trace Updated', {
-                description: 'The neural log has been refined to reflect new strategic data.'
+    const onSubmit = async (data: DecisionFormValues) => {
+        const toastId = toast.loading(isEditing ? 'Refining neural trace...' : 'Launching trace into the void...');
+        try {
+            if (isEditing && decisionId) {
+                await updateDecision(decisionId, data);
+                toast.success('Trace Updated', {
+                    id: toastId,
+                    description: 'The neural log has been refined to reflect new strategic data.'
+                });
+                router.push(`/decision/${decisionId}`);
+            } else {
+                await addDecision(data);
+                clearDraft();
+                toast.success('Decision Launched!', {
+                    id: toastId,
+                    description: 'Your decision has been logged and is now being analyzed for potential blindspots.',
+                });
+                router.push('/dashboard');
+            }
+        } catch (err) {
+            toast.error('Sync Failed', {
+                id: toastId,
+                description: 'The tactical uplink was interrupted. Please try again.'
             });
-            router.push(`/decision/${decisionId}`);
-        } else {
-            addDecision(data);
-            clearDraft();
-            toast.success('Decision Launched!', {
-                description: 'Your decision has been logged and is now being analyzed for potential blindspots.',
-            });
-            router.push('/dashboard');
         }
     };
 
@@ -648,7 +658,7 @@ export function DecisionForm({ initialData, isEditing, decisionId }: DecisionFor
                             </Button>
                             {currentStep === STEPS.length - 1 ? (
                                 <Button type="submit" className="h-16 bg-primary hover:bg-blue-600 px-16 rounded-[1.5rem] shadow-glow shadow-primary/20 transition-all text-sm uppercase tracking-[0.3em] font-black">
-                                    Launch Trace
+                                    {isEditing ? 'Refine Trace' : 'Launch Trace'}
                                 </Button>
                             ) : (
                                 <Button type="button" onClick={handleNext} className="h-16 rounded-[1.5rem] px-12 font-black text-sm uppercase tracking-[0.2em] gap-4 shadow-glow shadow-primary/10">
