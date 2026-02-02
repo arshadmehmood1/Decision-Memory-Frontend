@@ -186,7 +186,7 @@ export default function DecisionDetailClient() {
     const handleStartAudit = () => {
         setAuditData({
             outcome: 'SUCCEEDED',
-            assumptionValidations: decision.assumptions.map(a => ({ id: a.id, validatedAs: 'UNKNOWN' }))
+            assumptionValidations: decision.assumptions.map(a => ({ id: a.id!, validatedAs: 'UNKNOWN' as const }))
         });
         setAuditStep(1);
         setShowOutcomeFlow(true);
