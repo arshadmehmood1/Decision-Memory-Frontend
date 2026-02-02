@@ -111,7 +111,7 @@ export default function DashboardClient() {
                     <p className="text-gray-400 font-black uppercase tracking-[0.2em] text-[9px] mt-1">Operational Workspace / Trace Mode</p>
                 </div>
                 <div className="flex items-center gap-6">
-                    {featureFlags.decision_streaks && <StreakBadge streak={streak} />}
+                    {featureFlags.decision_streaks && <StreakBadge streak={streak.currentStreak} />}
                     <Link href="/decision/new" className="w-full sm:w-auto">
                         <Button className="w-full h-12 sm:h-14 rounded-xl sm:rounded-2xl px-8 shadow-premium shadow-blue-500/10 hover:scale-[1.02] active:scale-95 transition-all text-sm sm:text-lg gap-3">
                             <Plus size={18} strokeWidth={3} />

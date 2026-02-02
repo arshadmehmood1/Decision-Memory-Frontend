@@ -24,7 +24,7 @@ export function StreakBadge({ streak, className }: StreakBadgeProps) {
             )}
         >
             <Flame size={16} className="fill-orange-400/20" />
-            <span>{streak} Week Streak</span>
+            <span>{streak} Day Streak</span>
 
             {/* Tooltip hint */}
             <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 px-3 py-1 bg-black/80 backdrop-blur-md rounded-lg text-[10px] text-gray-400 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-white/5">
