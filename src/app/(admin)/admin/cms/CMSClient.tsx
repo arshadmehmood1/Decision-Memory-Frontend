@@ -38,8 +38,7 @@ export default function CMSClient() {
     });
 
     const [versions, setVersions] = useState<any[]>([]);
-    const { toggleFeatureFlag, fetchFeatureFlag, featureFlags } = useStore();
-    const FEATURE_KEYS = ['new_pricing_page', 'ai_analytics', 'beta_dashboard'];
+    const { toggleFeatureFlag, fetchFeatureFlag, fetchFeatureFlags, featureFlags } = useStore();
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -49,15 +48,27 @@ export default function CMSClient() {
     useEffect(() => {
         if (!mounted) return;
         if (activeTab === 'FEATURES') {
-            FEATURE_KEYS.forEach(key => fetchFeatureFlag(key));
+            fetchFeatureFlags();
+        } else if (activeTab === 'ROADMAP') {
+            loadRoadmap();
         } else {
             loadVersions();
         }
     }, [activeTab, mounted]);
 
+    const loadRoadmap = async () => {
+        try {
+            const res = await apiRequest<{ data: any[] }>('/api/admin/updates');
+            setVersions(res.data);
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to sync roadmap matrix.");
+        }
+    };
+
     const loadVersions = async () => {
         try {
-            const res = await apiRequest<{ data: any[] }>('/admin/cms/versions');
+            const res = await apiRequest<{ data: any[] }>('/api/admin/cms/versions');
             setVersions(res.data);
         } catch (err) {
             console.error(err);
@@ -66,12 +77,18 @@ export default function CMSClient() {
 
     const handleApprove = async (id: string) => {
         try {
-            await apiRequest('/admin/cms/approve', {
-                method: 'POST',
-                body: JSON.stringify({ id })
-            });
-            toast.success("Content matrix stabilized. Update is now live.");
-            loadVersions();
+            if (activeTab === 'ROADMAP') {
+                await apiRequest(`/api/admin/updates/${id}/approve`, { method: 'POST' });
+                toast.success("Roadmap feature deployed successfully.");
+                loadRoadmap();
+            } else {
+                await apiRequest('/api/admin/cms/approve', {
+                    method: 'POST',
+                    body: JSON.stringify({ id })
+                });
+                toast.success("Content matrix stabilized. Update is now live.");
+                loadVersions();
+            }
         } catch (err) {
             console.error("Approve failed", err);
             toast.error("Handshake failed. Update rejected.");
@@ -80,18 +97,25 @@ export default function CMSClient() {
 
     const handleTerminate = async (id: string) => {
         try {
-            await apiRequest(`/admin/cms/version/${id}`, { method: 'DELETE' });
-            toast.success("Version terminated. Neural link severed.");
-            loadVersions();
+            if (activeTab === 'ROADMAP') {
+                await apiRequest(`/api/admin/updates/${id}/archive`, { method: 'POST' });
+                toast.success("Feature archived in roadmap.");
+                loadRoadmap();
+            } else {
+                await apiRequest(`/api/admin/cms/version/${id}`, { method: 'DELETE' });
+                toast.success("Version terminated. Neural link severed.");
+                loadVersions();
+            }
         } catch (err) {
             console.error("Terminate failed", err);
-            toast.error("Termination failed. Version persists.");
+            toast.error("Termination failed. Action rejected.");
         }
     };
 
     const handlePreview = async (id: string) => {
         try {
-            const res = await apiRequest<{ data: any }>(`/admin/cms/version/${id}`);
+            const endpoint = activeTab === 'ROADMAP' ? `/api/admin/updates/${id}` : `/api/admin/cms/version/${id}`;
+            const res = await apiRequest<{ data: any }>(endpoint);
             setShowPreview(res.data);
         } catch (err) {
             console.error("Preview failed", err);
@@ -101,7 +125,7 @@ export default function CMSClient() {
 
     const handleRollback = async (id: string) => {
         try {
-            await apiRequest(`/admin/cms/rollback/${id}`, { method: 'POST' });
+            await apiRequest(`/api/admin/cms/rollback/${id}`, { method: 'POST' });
             toast.success("Rolled back to selected version.");
             loadVersions();
             setShowRollbackLog(false);
@@ -148,7 +172,7 @@ export default function CMSClient() {
                 {/* Pages Sidebar */}
                 <div className="space-y-2">
                     <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4 px-4">Neural Segments</h3>
-                    {['LANDING', 'DASHBOARD', 'FEATURES', 'PRICING_PAGE', 'LEGAL_MATRICES'].map((tab) => (
+                    {['LANDING', 'ROADMAP', 'FEATURES', 'DASHBOARD', 'PRICING_PAGE', 'LEGAL_MATRICES'].map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
@@ -177,10 +201,14 @@ export default function CMSClient() {
                                 </Badge>
                             </div>
 
-                            {FEATURE_KEYS.map((key) => (
+                            {Object.keys(featureFlags).length === 0 && (
+                                <p className="text-gray-500 text-xs text-center p-8 uppercase font-black tracking-widest ">No feature keys located in the matrix</p>
+                            )}
+
+                            {Object.entries(featureFlags).map(([key, enabled]) => (
                                 <Card key={key} className="p-6 bg-[#0d1117] border-white/5 flex items-center justify-between group hover:border-white/10 transition-all">
                                     <div className="flex items-center gap-4">
-                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${featureFlags[key] ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${enabled ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
                                             <Zap size={20} />
                                         </div>
                                         <div>
@@ -190,16 +218,16 @@ export default function CMSClient() {
                                     </div>
 
                                     <div className="flex items-center gap-4">
-                                        <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${featureFlags[key] ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
-                                            {featureFlags[key] ? 'Active' : 'Disabled'}
+                                        <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${enabled ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
+                                            {enabled ? 'Active' : 'Disabled'}
                                         </div>
                                         <Button
-                                            onClick={() => toggleFeatureFlag(key, !featureFlags[key])}
-                                            className={`rounded-xl font-black text-[10px] uppercase tracking-widest h-10 px-6 transition-all ${featureFlags[key]
+                                            onClick={() => toggleFeatureFlag(key, !enabled)}
+                                            className={`rounded-xl font-black text-[10px] uppercase tracking-widest h-10 px-6 transition-all ${enabled
                                                 ? 'bg-red-500 text-white hover:bg-red-600 shadow-[0_0_20px_rgba(239,68,68,0.3)]'
                                                 : 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-[0_0_20px_rgba(16,185,129,0.3)]'}`}
                                         >
-                                            {featureFlags[key] ? 'Disable' : 'Enable'}
+                                            {enabled ? 'Disable' : 'Enable'}
                                         </Button>
                                     </div>
                                 </Card>

@@ -755,16 +755,27 @@ export const useStore = create<UserStore>()(
 
             fetchFeatureFlags: async () => {
                 try {
-                    const res = await apiRequest<{ data: { featureKey: string | null }[] }>('/updates');
-                    const flags: Record<string, boolean> = {};
-                    res.data.forEach(update => {
-                        if (update.featureKey) {
-                            flags[update.featureKey] = true;
-                        }
-                    });
+                    const { currentUser } = get();
+                    let flags: Record<string, boolean> = {};
+
+                    if (currentUser?.role === 'ADMIN') {
+                        // Admin: fetch all flags from the database
+                        const res = await apiRequest<{ data: { featureKey: string, isEnabled: boolean }[] }>('/api/admin/feature');
+                        res.data.forEach(f => {
+                            flags[f.featureKey] = f.isEnabled;
+                        });
+                    } else {
+                        // Regular user: fetch only live roadmap features
+                        const res = await apiRequest<{ data: { featureKey: string | null }[] }>('/api/updates');
+                        res.data.forEach(update => {
+                            if (update.featureKey) {
+                                flags[update.featureKey] = true;
+                            }
+                        });
+                    }
                     set({ featureFlags: flags });
                 } catch (err) {
-                    console.error("Failed to fetch feature flags from roadmap", err);
+                    console.error("Failed to fetch feature flags", err);
                 }
             },
 
