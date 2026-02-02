@@ -1,14 +1,15 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/lib/store';
 import { Button } from '@/components/ui/Button';
-import { BrainCircuit, Target, BarChart3, Rocket, ChevronRight, X, Briefcase, Loader2 } from 'lucide-react';
+import { BrainCircuit, Target, BarChart3, Rocket, ChevronRight, X, Briefcase, Loader2, Eye as EyeIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/Input';
 import { toast } from 'sonner';
+import { DEMO_DECISION } from '@/lib/demo-data';
+import { useRouter } from 'next/navigation';
 
 const steps = [
     {
@@ -49,11 +50,13 @@ const steps = [
 ];
 
 export function OnboardingGuide() {
-    const { currentUser, updateUser, currentWorkspaceId, updateWorkspace } = useStore();
+    const router = useRouter();
+    const { currentUser, updateUser, currentWorkspaceId, updateWorkspace, addDecision, decisions } = useStore();
     const [currentStep, setCurrentStep] = useState(0);
     const [isVisible, setIsVisible] = useState(false);
     const [workspaceName, setWorkspaceName] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [loadingDemo, setLoadingDemo] = useState(false);
 
     useEffect(() => {
         // Trigger if user exists and hasn't onboarded
@@ -98,6 +101,38 @@ export function OnboardingGuide() {
             await updateUser({ hasOnboarded: true });
         } catch (err) {
             console.error("Failed to update onboarding status", err);
+        }
+    };
+
+    const handleViewDemoDecision = async () => {
+        setLoadingDemo(true);
+        try {
+            // Check if demo already exists
+            const existingDemo = decisions.find(d => d.title === DEMO_DECISION.title);
+            let demoId: string;
+
+            if (existingDemo) {
+                demoId = existingDemo.id;
+            } else {
+                // Create the demo decision
+                await addDecision(DEMO_DECISION as Parameters<typeof addDecision>[0]);
+                // Get the newly created demo decision from the updated decisions
+                const updatedDecisions = useStore.getState().decisions;
+                const newDemo = updatedDecisions.find(d => d.title === DEMO_DECISION.title);
+                demoId = newDemo?.id || 'demo';
+                toast.success('Demo Decision Loaded', {
+                    description: 'A complete example has been added to your dashboard.'
+                });
+            }
+
+            // Complete onboarding and navigate
+            await handleComplete();
+            router.push(`/decision/${demoId}`);
+        } catch (err) {
+            console.error("Failed to load demo", err);
+            toast.error('Failed to load demo decision');
+        } finally {
+            setLoadingDemo(false);
         }
     };
 
@@ -171,6 +206,31 @@ export function OnboardingGuide() {
                                         autoFocus
                                     />
                                     <p className="mt-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Global Identifier</p>
+                                </motion.div>
+                            )}
+
+                            {/* Demo Decision Option on Trace step */}
+                            {currentStepData.id === 'trace' && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="pt-4"
+                                >
+                                    <button
+                                        onClick={handleViewDemoDecision}
+                                        disabled={loadingDemo}
+                                        className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 hover:bg-purple-500/20 transition-all text-sm font-bold"
+                                    >
+                                        {loadingDemo ? (
+                                            <Loader2 size={16} className="animate-spin" />
+                                        ) : (
+                                            <EyeIcon size={16} />
+                                        )}
+                                        View Example Decision
+                                    </button>
+                                    <p className="mt-3 text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                                        See a complete example before creating your own
+                                    </p>
                                 </motion.div>
                             )}
                         </motion.div>

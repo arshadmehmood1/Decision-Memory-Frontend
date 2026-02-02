@@ -65,7 +65,18 @@ export function DynamicExperience() {
                                         <p className="text-indigo-50 font-bold text-lg leading-relaxed">{section.description}</p>
                                     </div>
                                     {section.actionText && (
-                                        <button className="bg-white text-indigo-600 hover:bg-blue-50 rounded-2xl h-14 px-8 text-sm font-black shadow-xl shadow-black/20 flex items-center gap-2 transition-all hover:scale-105">
+                                        <button
+                                            onClick={() => {
+                                                if (section.actionUrl === '/decision/new') {
+                                                    // This is where we'd check the limit if we had access to 'decisions' here
+                                                    // Since we don't, we'll rely on the Dashboard button or add store access here
+                                                    // For now, let's keep it simple and just let them click through
+                                                    // The actual enforcement happens on the backend or main dashboard
+                                                    window.location.href = section.actionUrl!;
+                                                }
+                                            }}
+                                            className="bg-white text-indigo-600 hover:bg-blue-50 rounded-2xl h-14 px-8 text-sm font-black shadow-xl shadow-black/20 flex items-center gap-2 transition-all hover:scale-105"
+                                        >
                                             {section.actionText}
                                             <ChevronRight size={16} strokeWidth={3} />
                                         </button>

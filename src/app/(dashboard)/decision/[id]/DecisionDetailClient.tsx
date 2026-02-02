@@ -45,6 +45,7 @@ import { useStore, Decision, OutcomeReview } from '@/lib/store';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { SimilarDecisions } from '@/components/decisions/SimilarDecisions';  // Add import
 
 const statusVariants: Record<string, any> = {
     ACTIVE: 'warning',
@@ -415,6 +416,8 @@ export default function DecisionDetailClient() {
                             </CardContent>
                         </Card>
                     </div>
+                    {/* Similar Decisions - Inserted after the main metadata card */}
+                    <SimilarDecisions currentDecisionId={decision.id} category={decision.category} tags={decision.tags} />
                 </div>
             ) : (
                 <div className="max-w-3xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -561,6 +564,18 @@ export default function DecisionDetailClient() {
                                                                     </button>
                                                                 ))}
                                                             </div>
+                                                            {/* Add Notes Field */}
+                                                            <Textarea
+                                                                placeholder="Add validation notes or evidence..."
+                                                                value={validation?.notes || ''}
+                                                                onChange={(e) => {
+                                                                    const newValidations = [...(auditData.assumptionValidations || [])];
+                                                                    const vIdx = newValidations.findIndex((v: any) => v.id === a.id);
+                                                                    newValidations[vIdx] = { ...newValidations[vIdx], notes: e.target.value };
+                                                                    setAuditData((prev: Partial<OutcomeReview>) => ({ ...prev, assumptionValidations: newValidations }));
+                                                                }}
+                                                                className="min-h-[60px] text-xs bg-black/20 border-white/5 focus:border-white/10 rounded-xl"
+                                                            />
                                                         </div>
                                                     );
                                                 })}

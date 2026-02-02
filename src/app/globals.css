@@ -86,10 +86,12 @@
 
     .animate-float {
         animation: float 6s ease-in-out infinite;
+        will-change: transform;
     }
 
     .animate-pulse-subtle {
         animation: pulse-subtle 3s ease-in-out infinite;
+        will-change: transform, opacity;
     }
 
     @keyframes shimmer {

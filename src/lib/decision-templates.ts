@@ -28,27 +28,53 @@ export interface DecisionTemplate {
 export const DECISION_TEMPLATES: DecisionTemplate[] = [
     {
         id: 'tech-stack',
-        name: 'Tech Stack Change',
-        description: 'Switching databases, frameworks, or infrastructure',
+        name: 'Tool / Tech Switch',
+        description: 'Switching tools, frameworks, or infrastructure',
         icon: FileCode,
         color: 'purple',
         category: 'TECH',
         prefill: {
-            title: 'Migrating from [Current Tech] to [New Tech]',
-            decision: 'We are switching from [current technology] to [new technology] to address [specific pain points].',
-            context: 'Current system limitations:\n- [Scalability issue]\n- [Performance bottleneck]\n- [Maintenance cost]\n\nThis change is triggered by [growth milestone / incident / requirement].',
+            title: 'Switching from [Current Tool] to [New Tool]',
+            decision: 'We are switching from [current tool] to [new tool] to address [specific pain points].',
+            context: 'Current system limitations:\n- [Scalability issue]\n- [Cost inefficiency]\n- [Developer friction]\n\nThis change is triggered by [growth milestone / contract renewal / requirement].',
             alternatives: [
-                { name: 'Stay with current solution', whyRejected: 'Does not address the core scalability concerns we\'re facing.' },
+                { name: 'Stay with current solution', whyRejected: 'Does not address the core friction we\'re facing.' },
                 { name: 'Build custom in-house solution', whyRejected: 'Engineering time better spent on product features.' }
             ],
             assumptions: [
-                { value: 'The migration can be completed in [X weeks] without major production incidents.' },
-                { value: 'The new solution will handle [X]x current load.' }
+                { value: 'The migration can be completed in [X weeks] without major disruption.' },
+                { value: 'The new tool will handle [X]x current load/usage.' }
             ],
             successCriteria: [
                 { value: 'Zero data loss during migration' },
-                { value: 'Response times under [X]ms at peak load' },
-                { value: 'Maintenance time reduced by [X]%' }
+                { value: 'Team productivity increases by [X]%' },
+                { value: 'Cost reduced by [X]% annually' }
+            ]
+        }
+    },
+    {
+        id: 'feature-priority',
+        name: 'Feature Prioritization',
+        description: 'Deciding between competing features or roadmap items',
+        icon: Target,
+        color: 'orange',
+        category: 'PRODUCT',
+        prefill: {
+            title: 'Prioritizing [Feature A] over [Feature B]',
+            decision: 'We are prioritizing [Feature A] for the upcoming cycle/sprint instead of [Feature B].',
+            context: 'Strategic Context:\n- Current goal: [Growth/Retention/Revenue]\n- Resource constraints: [Limited eng capacity]\n\nFeature A Impact: [High]\nFeature B Impact: [Medium]',
+            alternatives: [
+                { name: 'Build Feature B first', whyRejected: 'Lower RICE score; less alignment with current Q1 goals.' },
+                { name: 'Build both in parallel', whyRejected: 'Would reduce focus and delay delivery of both.' }
+            ],
+            assumptions: [
+                { value: 'Feature A is crucial for closing [Contract/Segment].' },
+                { value: 'Feature B can wait until Q2 without losing key customers.' }
+            ],
+            successCriteria: [
+                { value: 'Feature A ships by [Date]' },
+                { value: 'Adoption rate of [X]% within 2 weeks' },
+                { value: 'Stakeholders align on the delay of Feature B' }
             ]
         }
     },

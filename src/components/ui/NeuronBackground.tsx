@@ -1,23 +1,25 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 export function NeuronBackground() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const mouseRef = useRef({ x: 0, y: 0 });
+    const rectRef = useRef<{ left: number; top: number }>({ left: 0, top: 0 });
 
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { alpha: true }); // Optimize for transparency
         if (!ctx) return;
 
         let animationFrameId: number;
         let particles: Particle[] = [];
-        const particleCount = 100; // Increased density
-        const connectionDistance = 180; // Increased connection reach
-        const mouseRadius = 200; // Increased interactive radius
+        const particleCount = typeof window !== 'undefined' && window.innerWidth < 768 ? 40 : 80; // Reduced mobile count
+        const connectionDistance = 150;
+        const connectionDistanceSq = connectionDistance * connectionDistance;
+        const mouseRadius = 200;
 
         class Particle {
             x: number;
@@ -25,35 +27,37 @@ export function NeuronBackground() {
             vx: number;
             vy: number;
             size: number;
-            baseX: number;
-            baseY: number;
+            color: string;
 
             constructor(width: number, height: number) {
                 this.x = Math.random() * width;
                 this.y = Math.random() * height;
-                this.baseX = this.x;
-                this.baseY = this.y;
-                this.vx = (Math.random() - 0.5) * 0.4;
-                this.vy = (Math.random() - 0.5) * 0.4;
-                this.size = Math.random() * 3 + 1.5; // Slightly larger
+                this.vx = (Math.random() - 0.5) * 0.3; // Slower, smoother speed
+                this.vy = (Math.random() - 0.5) * 0.3;
+                this.size = Math.random() * 2 + 1;
+                this.color = '#3b82f6';
             }
 
             update(width: number, height: number, mouseX: number, mouseY: number) {
-                // Gentle floating movement
                 this.x += this.vx;
                 this.y += this.vy;
 
                 // Mouse interaction
                 const dx = mouseX - this.x;
                 const dy = mouseY - this.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
+                const distSq = dx * dx + dy * dy;
 
-                if (distance < mouseRadius) {
-                    const force = (mouseRadius - distance) / mouseRadius;
-                    const directionX = dx / distance;
-                    const directionY = dy / distance;
-                    this.x -= directionX * force * 5; // Stronger repulsion
-                    this.y -= directionY * force * 5;
+                if (distSq < mouseRadius * mouseRadius) {
+                    const distance = Math.sqrt(distSq);
+                    const force = (mouseRadius - distance) / mouseRadius; // 0 to 1
+
+                    // Gentler repulsion calculation
+                    if (distance > 0) {
+                        const directionX = dx / distance;
+                        const directionY = dy / distance;
+                        this.x -= directionX * force * 2; // Reduced repulsion force
+                        this.y -= directionY * force * 2;
+                    }
                 }
 
                 // Bounce off edges
@@ -62,13 +66,10 @@ export function NeuronBackground() {
             }
 
             draw(ctx: CanvasRenderingContext2D) {
-                ctx.fillStyle = '#2563eb'; // More vibrant blue
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = '#3b82f6';
+                ctx.fillStyle = this.color;
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.shadowBlur = 0; // Reset shadow for lines
             }
         }
 
@@ -79,65 +80,94 @@ export function NeuronBackground() {
             }
         };
 
+        const updateRect = () => {
+            if (canvas) {
+                const r = canvas.getBoundingClientRect();
+                rectRef.current = { left: r.left, top: r.top };
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+            }
+        };
+
         const handleResize = () => {
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
+            updateRect();
             init();
         };
 
         const animate = () => {
+            // Robust check: if canvas is gone, stop logic but don't crash
+            if (!canvasRef.current) return;
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            particles.forEach((p, i) => {
+            // Update and draw particles
+            particles.forEach((p) => {
                 p.update(canvas.width, canvas.height, mouseRef.current.x, mouseRef.current.y);
                 p.draw(ctx);
+            });
 
-                // Draw connections
+            // Draw connections optimized
+            // We can draw all lines in one path if they share style, but opacity varies.
+            // Opacity bucketing is a good optimization.
+
+            ctx.lineWidth = 1;
+
+            for (let i = 0; i < particles.length; i++) {
                 for (let j = i + 1; j < particles.length; j++) {
+                    const p1 = particles[i];
                     const p2 = particles[j];
-                    const dx = p.x - p2.x;
-                    const dy = p.y - p2.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const dx = p1.x - p2.x;
+                    const dy = p1.y - p2.y;
+                    const distSq = dx * dx + dy * dy;
 
-                    if (distance < connectionDistance) {
-                        ctx.strokeStyle = `rgba(37, 99, 235, ${(1 - distance / connectionDistance) * 0.5})`;
-                        ctx.lineWidth = 1.5; // Thicker lines
+                    if (distSq < connectionDistanceSq) {
+                        const alpha = 1 - (distSq / connectionDistanceSq);
+                        ctx.strokeStyle = `rgba(59, 130, 246, ${alpha * 0.5})`; // Max opacity 0.5
                         ctx.beginPath();
-                        ctx.moveTo(p.x, p.y);
+                        ctx.moveTo(p1.x, p1.y);
                         ctx.lineTo(p2.x, p2.y);
                         ctx.stroke();
                     }
                 }
-            });
+            }
 
             animationFrameId = requestAnimationFrame(animate);
         };
 
         const handleMouseMove = (e: MouseEvent) => {
-            const rect = canvas.getBoundingClientRect();
+            // fast read from cached rect
             mouseRef.current = {
-                x: e.clientX - rect.left,
-                y: e.clientY - rect.top
+                x: e.clientX - rectRef.current.left,
+                y: e.clientY - rectRef.current.top
             };
+        };
+
+        const handleScroll = () => {
+            updateRect(); // Update positions on scroll (sticky headers etc might shift layout)
         };
 
         window.addEventListener('resize', handleResize);
         window.addEventListener('mousemove', handleMouseMove);
-        handleResize();
+        window.addEventListener('scroll', handleScroll); // Recalculate rect on scroll
+
+        // Initial setup
+        updateRect();
+        init();
         animate();
 
         return () => {
             cancelAnimationFrame(animationFrameId);
             window.removeEventListener('resize', handleResize);
             window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('scroll', handleScroll);
         };
     }, []);
 
     return (
         <canvas
             ref={canvasRef}
-            className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-80 transition-opacity duration-1000"
-            style={{ filter: 'blur(0.3px)' }}
+            className="absolute inset-0 w-full h-full pointer-events-none z-0"
+            style={{ opacity: 0.6 }}
         />
     );
 }

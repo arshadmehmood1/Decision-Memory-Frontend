@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -28,6 +28,7 @@ import {
 import { MarketingNavbar } from '@/components/layout/MarketingNavbar';
 import { Footer } from '@/components/layout/Footer';
 import { NeuronBackground } from '@/components/ui/NeuronBackground';
+import { DecisionCard } from '@/components/decisions/DecisionCard';
 
 const fadeIn = {
   initial: { opacity: 0, y: 30 },
@@ -38,21 +39,21 @@ const fadeIn = {
 
 const TESTIMONIALS = [
   {
-    quote: "This saved me from switching tools AGAIN. I logged my Stripe→Paddle decision and when I wanted to switch back, the log reminded me why I left. Saved me $5k and 2 weeks.",
-    name: "Sarah Chen",
-    role: "Founder, TaskFlow",
+    quote: "We used to argue about why we chose Postgres over Mongo for weeks. Now I just drop the Decision Memory link in Slack and the debate ends. It's lowered our meeting load by 30%.",
+    name: "Alex V.",
+    role: "CTO @ Streamline",
     avatar: "/images/avatar_1.png"
   },
   {
-    quote: "Decision Memory is the 'Git' for our executive team. We no longer guess why we did something 6 months ago; we just look at the trace.",
-    name: "Marcus Thorne",
-    role: "Founder, NeuraLink",
+    quote: "I didn't realize how much knowledge walked out the door with our last VP of Engineering until we looked for the 'why' behind our pricing structure. Never again.",
+    name: "J. Thorne",
+    role: "Founder, Series A Fintech",
     avatar: "/images/avatar_2.png"
   },
   {
-    quote: "The AI blindspot analysis is a game-changer. It caught a cognitive bias in our hiring process that saved us from a very expensive mis-hire.",
-    name: "Elena Rodriguez",
-    role: "CEO, ScaleUp",
+    quote: "The 'Blindspot Analysis' is actually scary good. It flagged that I was ignoring the maintenance cost of a new tool because I was biased by the sales demo. Saved us $20k.",
+    name: "Sarah Jenkins",
+    role: "Product Lead",
     avatar: "/images/avatar_3.png"
   }
 ];
@@ -61,17 +62,30 @@ export default function LandingPage() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annually'>('monthly');
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [publicDecisions, setPublicDecisions] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchPublic = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/public/community`);
+        const data = await res.json();
+        if (data.success) {
+          setPublicDecisions(data.data.slice(0, 3)); // Only show top 3 on landing
+        }
+      } catch (err) {
+        console.error("Failed to fetch public community data", err);
+      }
+    };
+    fetchPublic();
+  }, []);
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
   return (
-    <div className="flex flex-col min-h-screen bg-black selection:bg-blue-500/30 selection:text-white overflow-x-hidden text-gray-300">
-      <MarketingNavbar />
-
+    <div className="flex flex-col min-h-screen bg-transparent selection:bg-blue-500/30 selection:text-white overflow-x-hidden text-gray-300">
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden hero-gradient">
-          <NeuronBackground />
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="text-center space-y-10 max-w-5xl mx-auto">
               <motion.div
@@ -90,16 +104,18 @@ export default function LandingPage() {
                 transition={{ duration: 0.6 }}
                 className="text-6xl md:text-8xl font-black tracking-tighter text-white leading-[0.9]"
               >
-                GitHub for <span className="gradient-text">Decisions</span>
+                Building Your <br />
+                <span className="gradient-text">Institutional Brain.</span>
               </motion.h1>
 
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
-                className="text-2xl md:text-3xl text-gray-200 leading-tight max-w-3xl mx-auto font-semibold"
+                className="text-2xl md:text-3xl text-gray-200 leading-tight max-w-3xl mx-auto font-medium"
               >
-                Stop repeating expensive mistakes. Log decisions, track outcomes, and learn from regret.
+                High-velocity teams make fast decisions. <br className="hidden md:block" />
+                <span className="text-gray-400">Great teams remember <em>why</em>.</span>
               </motion.p>
 
               <motion.div
@@ -109,23 +125,28 @@ export default function LandingPage() {
                 className="flex flex-col sm:flex-row items-center justify-center gap-6"
               >
                 <Link href="/signup">
-                  <Button className="h-16 px-10 rounded-2xl shadow-glow font-black text-lg uppercase tracking-widest transition-all active:scale-95 group">
-                    Start Free
+                  <Button className="h-16 px-10 rounded-2xl shadow-glow font-black text-lg uppercase tracking-widest transition-all active:scale-95 group bg-white text-black hover:bg-gray-200 border-none">
+                    Start Logging
                     <ChevronRight size={22} className="ml-2 mt-0.5 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
 
                 <Link href="#how-it-works">
                   <Button variant="outline" className="h-16 px-10 rounded-2xl border-white/10 bg-white/5 hover:bg-white/10 shadow-soft font-black text-lg uppercase tracking-widest transition-all active:scale-95 text-white">
-                    <Zap size={20} className="mr-2 text-blue-400" />
-                    Watch Demo
+                    <Zap size={20} className="mr-2 text-yellow-400" />
+                    See Example
                   </Button>
                 </Link>
               </motion.div>
 
-              <div className="pt-4 text-sm font-bold text-white uppercase tracking-widest flex items-center justify-center gap-3">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-glow" />
-                Used by 300+ founders • 5,000+ decisions tracked
+              <div className="pt-4 text-sm font-bold text-gray-500 uppercase tracking-widest flex items-center justify-center gap-3">
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 size={14} className="text-green-500" /> Free for individuals
+                </span>
+                <span className="w-1 h-1 rounded-full bg-gray-800" />
+                <span className="flex items-center gap-1">
+                  <ShieldCheck size={14} className="text-blue-500" /> SOC2 Compliant
+                </span>
               </div>
             </div>
 
@@ -153,8 +174,7 @@ export default function LandingPage() {
         </section>
 
         {/* Problem Section */}
-        <section className="relative py-20 md:py-32 bg-black overflow-hidden">
-          <NeuronBackground />
+        <section className="relative py-20 md:py-32 bg-transparent overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <motion.div {...fadeIn} className="text-center max-w-3xl mx-auto mb-12 md:mb-20 space-y-4">
               <h2 className="text-3xl md:text-5xl font-black tracking-tight text-white leading-tight">
@@ -203,8 +223,7 @@ export default function LandingPage() {
         </section>
 
         {/* Features/Solution Section */}
-        <section id="features" className="relative py-20 md:py-32 bg-neutral-900/10 overflow-hidden">
-          <NeuronBackground />
+        <section id="features" className="relative py-20 md:py-32 bg-neutral-900/5 overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <motion.div {...fadeIn} className="text-center max-w-3xl mx-auto mb-12 md:mb-20 space-y-4">
               <h2 className="text-3xl md:text-5xl font-black tracking-tight text-white leading-tight">
@@ -249,9 +268,42 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* Community Preview Section */}
+        {publicDecisions.length > 0 && (
+          <section className="relative py-20 md:py-32 bg-black overflow-hidden border-y border-white/5">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+              <motion.div {...fadeIn} className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
+                <div className="space-y-4 text-center md:text-left">
+                  <h2 className="text-3xl md:text-5xl font-black tracking-tight text-white leading-tight">
+                    Learned from <br />
+                    <span className="text-primary italic">Global Intelligence.</span>
+                  </h2>
+                  <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-xs">Recently shared neural traces from our users</p>
+                </div>
+                <Link href="/community">
+                  <Button variant="outline" className="h-14 px-8 rounded-xl border-white/10 bg-white/5 hover:bg-white/10 text-white font-bold uppercase tracking-widest text-xs">
+                    View All Traces <ArrowRight size={16} className="ml-2" />
+                  </Button>
+                </Link>
+              </motion.div>
+
+              <div className="grid grid-cols-1 gap-6">
+                {publicDecisions.map((decision, idx) => (
+                  <motion.div
+                    key={decision.id}
+                    {...fadeIn}
+                    transition={{ ...fadeIn.transition, delay: idx * 0.1 }}
+                  >
+                    <DecisionCard decision={decision} />
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* How It Works Section */}
-        <section id="how-it-works" className="relative py-20 md:py-32 bg-black overflow-hidden">
-          <NeuronBackground />
+        <section id="how-it-works" className="relative py-20 md:py-32 bg-transparent overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <motion.div {...fadeIn} className="text-center mb-16 md:mb-24">
               <h2 className="text-3xl md:text-5xl font-black tracking-tight text-white">How It Works</h2>
@@ -289,8 +341,7 @@ export default function LandingPage() {
         </section>
 
         {/* Social Proof Section */}
-        <section className="relative py-20 md:py-32 bg-black overflow-hidden">
-          <NeuronBackground />
+        <section className="relative py-20 md:py-32 bg-transparent overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <motion.div {...fadeIn} className="text-center mb-16 md:mb-20">
               <h2 className="text-3xl md:text-5xl font-black tracking-tight text-white">What {billingCycle === 'annually' ? 'Power' : ''} Founders Are Saying</h2>
@@ -342,8 +393,7 @@ export default function LandingPage() {
         </section>
 
         {/* Pricing Section */}
-        <section id="pricing" className="relative py-32 bg-black overflow-hidden">
-          <NeuronBackground />
+        <section id="pricing" className="relative py-32 bg-black/20 overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <motion.div {...fadeIn} className="text-center mb-20 space-y-6">
               <h2 className="text-4xl md:text-5xl font-black tracking-tight text-white">Simple, Transparent Pricing</h2>
@@ -353,7 +403,12 @@ export default function LandingPage() {
                   onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'annually' : 'monthly')}
                   className="w-16 h-8 bg-white/10 rounded-full p-1 relative transition-all hover:bg-white/20 border border-white/10"
                 >
-                  <div className={`w-6 h-6 bg-white rounded-full shadow-glow transition-all absolute top-1 ${billingCycle === 'monthly' ? 'left-1' : 'left-9'}`} />
+                  <motion.div
+                    className="w-6 h-6 bg-white rounded-full shadow-glow"
+                    layout
+                    transition={{ type: "spring", stiffness: 700, damping: 30 }}
+                    animate={{ x: billingCycle === 'monthly' ? 0 : 32 }}
+                  />
                 </button>
                 <span className={`text-sm font-bold uppercase transition-colors ${billingCycle === 'annually' ? 'text-white' : 'text-gray-500'}`}>Annually (Save 20%)</span>
               </div>
@@ -383,8 +438,9 @@ export default function LandingPage() {
               </Card>
 
               {/* Pro Plan */}
-              <Card className="p-12 border-primary border-4 shadow-premium bg-white/5 relative z-10 md:scale-105">
-                <div className="p-8 md:p-12 space-y-8">
+              {/* Pro Plan */}
+              <Card className="p-10 border-primary border-2 shadow-premium bg-white/5 relative z-10 md:scale-105 ring-1 ring-blue-500/50">
+                <div className="space-y-8">
                   <div className="space-y-2">
                     <h3 className="text-3xl font-black text-white">Startup</h3>
                     <p className="text-blue-100 font-bold tracking-tight">Perfect for solo founders and early-stage teams.</p>
@@ -395,7 +451,7 @@ export default function LandingPage() {
                   </div>
                   <p className="text-gray-300 font-bold">Scale your decision intelligence system.</p>
                 </div>
-                <div className="space-y-4 mb-10">
+                <div className="space-y-4 mb-10 mt-10">
                   {[
                     "Unlimited decisions",
                     "Everything in Free+",
@@ -453,7 +509,6 @@ export default function LandingPage() {
               {...fadeIn}
             >
               <Card className="cta-gradient p-10 md:p-32 rounded-[2rem] md:rounded-[4rem] text-center space-y-8 md:space-y-10 shadow-glow rounded-[2rem] md:rounded-[4rem] overflow-hidden relative group">
-                <NeuronBackground />
                 {/* Decorative elements */}
                 <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:bg-white/20 transition-all duration-700" />
                 <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-400/20 rounded-full translate-y-1/2 -translate-x-1/2 blur-2xl" />
@@ -482,8 +537,6 @@ export default function LandingPage() {
           </div>
         </section>
       </main>
-
-      <Footer />
     </div >
   );
 }

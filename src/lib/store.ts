@@ -103,6 +103,11 @@ interface ApiUser {
         reviewReminders: boolean;
         marketingEmails: boolean;
     };
+    streak?: {
+        current: number;
+        longest: number;
+        activity: boolean[];
+    };
 }
 
 interface ApiWorkspaceUser {
@@ -769,14 +774,16 @@ export const useStore = create<UserStore>()(
                             email: user.email,
                             role: user.role,
                             hasOnboarded: user.hasOnboarded,
-                            avatar: (user.name || user.email).substring(0, 2).toUpperCase()
+                            avatar: (user.name || user.email).substring(0, 2).toUpperCase(),
+                            streak: user.streak
                         } : {
                             id: user.id,
                             name: user.name,
                             email: user.email,
                             role: user.role,
                             hasOnboarded: user.hasOnboarded,
-                            avatar: (user.name || user.email).substring(0, 2).toUpperCase()
+                            avatar: (user.name || user.email).substring(0, 2).toUpperCase(),
+                            streak: user.streak
                         }
                     }));
                     get().fetchFeatureFlags();

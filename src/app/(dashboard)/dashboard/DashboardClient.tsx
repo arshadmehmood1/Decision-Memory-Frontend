@@ -23,6 +23,8 @@ import { cn } from '@/lib/utils';
 import { useStore } from '@/lib/store';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DynamicExperience } from '@/components/dashboard/DynamicExperience';
+import { StreakTracker } from '@/components/dashboard/StreakTracker';
+import { AnnotationLayer } from '@/components/AnnotationLayer';
 import { SummaryDashboard } from '@/components/dashboard/SummaryDashboard';
 import { RegretNudge } from '@/components/dashboard/RegretNudge';
 import { DEMO_DECISION } from '@/lib/demo-data';
@@ -33,6 +35,8 @@ import { StreakBadge } from '@/components/dashboard/StreakBadge';
 import { MonthlyReportModal } from '@/components/dashboard/MonthlyReportModal';
 import { calculateStreak } from '@/lib/streak-utils';
 import { generateMonthlyReport } from '@/lib/report-utils';
+import { OnboardingChecklist } from '@/components/OnboardingChecklist';
+import { UpgradeModal } from '@/components/upgrade-modal';
 
 const CATEGORIES = ['ALL', 'TECH', 'HIRING', 'MARKETING', 'SALES', 'STRATEGIC'];
 
@@ -45,6 +49,8 @@ export default function DashboardClient() {
     const [showOnboarding, setShowOnboarding] = useState(true);
     const [isTimelineView, setIsTimelineView] = useState(false);
     const [isReportOpen, setIsReportOpen] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [upgradeReason, setUpgradeReason] = useState<'decision_limit' | 'general'>('general');
 
     const { decisions, currentUser, addDecision, featureFlags } = useStore();
 
@@ -136,6 +142,11 @@ export default function DashboardClient() {
                     </motion.div>
                 ))}
 
+                {/* Streak Tracker */}
+                <div className="col-span-1 sm:col-span-2 lg:col-span-1">
+                    <StreakTracker />
+                </div>
+
                 {/* Monthly Report Action */}
                 {featureFlags.monthly_report && (
                     <motion.div
@@ -167,53 +178,8 @@ export default function DashboardClient() {
             {/* Premium Analytics Dashboard */}
             {featureFlags.success_dashboard && <SummaryDashboard />}
 
-            {/* Onboarding Checklist */}
-            <AnimatePresence>
-                {showOnboarding && decisions.length < 5 && (
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 1.05 }}
-                    >
-                        <Card className="bg-blue-600 border-none p-6 md:p-10 relative overflow-hidden group shadow-glow">
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full translate-x-1/2 -translate-y-1/2 blur-3xl group-hover:bg-white/20 transition-all duration-700" />
-                            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6 lg:gap-10">
-                                <div className="space-y-4 lg:space-y-6 max-w-xl">
-                                    <div className="flex items-center gap-3 sm:gap-4">
-                                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-white/20 text-white flex items-center justify-center shadow-inner">
-                                            <Sparkles size={24} className="sm:size-7" />
-                                        </div>
-                                        <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">Level Up Your Brain</h3>
-                                    </div>
-                                    <p className="text-blue-50 font-bold text-base sm:text-lg leading-relaxed">To unlock advanced AI Trend Analysis, log at least 5 strategic decisions.</p>
-                                    <div className="flex items-center gap-4 sm:gap-6 pt-1">
-                                        <div className="flex-1 h-2 sm:h-3 bg-black/20 rounded-full overflow-hidden border border-white/5">
-                                            <div
-                                                className="h-full bg-white transition-all duration-1000 shadow-glow"
-                                                style={{ width: `${(decisions.length / 5) * 100}%` }}
-                                            />
-                                        </div>
-                                        <span className="text-[9px] sm:text-xs font-black text-white uppercase tracking-widest">{decisions.length}/5 COMPLETE</span>
-                                    </div>
-                                </div>
-                                <div className="flex flex-col sm:flex-row gap-3">
-                                    <Link href="/decision/new" className="w-full sm:w-auto">
-                                        <Button className="w-full bg-white text-primary border-none hover:bg-blue-50 rounded-xl sm:rounded-2xl h-12 sm:h-16 px-6 sm:px-8 text-sm sm:text-lg font-black shadow-xl">Record Choice</Button>
-                                    </Link>
-                                    <Button
-                                        variant="outline"
-                                        size="icon"
-                                        onClick={() => setShowOnboarding(false)}
-                                        className="sm:rounded-2xl rounded-xl border-white/20 bg-white/10 text-white hover:bg-white/20 h-12 w-12 sm:h-16 sm:w-16"
-                                    >
-                                        <X size={20} className="sm:size-7" />
-                                    </Button>
-                                </div>
-                            </div>
-                        </Card>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            {/* Onboarding Checklist - New spec-compliant component */}
+            <OnboardingChecklist />
 
             {/* Search and Filters Section */}
             <div className="space-y-8">
@@ -440,13 +406,27 @@ export default function DashboardClient() {
                                             Reset Filters
                                         </Button>
                                     ) : (
-                                        <Button
-                                            variant="outline"
-                                            onClick={handleLoadDemo}
-                                            className="rounded-2xl h-14 px-8 text-sm font-black uppercase tracking-widest hover:bg-white/10 border-white/20"
-                                        >
-                                            Load Demo Example
-                                        </Button>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => {
+                                                    setUpgradeReason('general');
+                                                    setShowUpgradeModal(true);
+                                                }}
+                                                className="rounded-2xl h-14 px-6 text-amber-400 border-amber-400/20 hover:bg-amber-400/10 font-bold uppercase tracking-wide"
+                                            >
+                                                <Sparkles size={16} className="mr-2" />
+                                                Upgrade
+                                            </Button>
+
+                                            <Button
+                                                variant="outline"
+                                                onClick={handleLoadDemo}
+                                                className="rounded-2xl h-14 px-8 text-sm font-black uppercase tracking-widest hover:bg-white/10 border-white/20"
+                                            >
+                                                Load Demo Example
+                                            </Button>
+                                        </div>
                                     )}
                                 </div>
                             </div>
@@ -468,6 +448,16 @@ export default function DashboardClient() {
                 isOpen={isReportOpen}
                 onClose={() => setIsReportOpen(false)}
                 data={monthlyReport}
+            />
+
+            <AnnotationLayer />
+
+            <UpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                reason={upgradeReason}
+                currentUsage={decisions.length}
+                limit={25}
             />
         </div>
     );

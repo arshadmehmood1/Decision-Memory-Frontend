@@ -9,6 +9,7 @@ import { useStore } from '@/lib/store';
 import { OnboardingGuide } from '@/components/OnboardingGuide';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { usePathname } from 'next/navigation';
 
 export default function DashboardLayout({
     children,
@@ -18,6 +19,18 @@ export default function DashboardLayout({
     useKeyboardShortcuts();
     const { currentUser, fetchWorkspaces, fetchDecisions, currentWorkspaceId, workspaces, isLoading, isAuthReady } = useStore();
     const [mounted, setMounted] = React.useState(false);
+    const pathname = usePathname();
+
+    React.useEffect(() => {
+        // The dashboard layout uses a scrollable div (h-screen overflow-y-auto), 
+        // not the window object.
+        const scrollContainer = document.querySelector('.dashboard-scroll-container');
+        if (scrollContainer) {
+            scrollContainer.scrollTo(0, 0);
+        } else {
+            window.scrollTo(0, 0);
+        }
+    }, [pathname]);
 
     React.useEffect(() => {
         setMounted(true);
@@ -31,7 +44,7 @@ export default function DashboardLayout({
     }, [currentUser, fetchWorkspaces, fetchDecisions, currentWorkspaceId, isAuthReady]);
 
     return (
-        <div className="h-screen overflow-y-auto bg-[#0d1117] font-sans text-white selection:bg-blue-500/30">
+        <div className="h-screen overflow-y-auto bg-[#0d1117] font-sans text-white selection:bg-blue-500/30 dashboard-scroll-container">
             {mounted && isAuthReady && (currentUser ? <Navbar /> : <MarketingNavbar />)}
             <OnboardingGuide />
 
@@ -39,11 +52,11 @@ export default function DashboardLayout({
             <AnimatePresence mode="wait">
                 {mounted && isAuthReady ? (
                     <motion.main
-                        key="dashboard-content"
-                        initial={{ opacity: 0, y: 10 }}
+                        key={pathname}
+                        initial={{ opacity: 0, y: 5 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.4 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        transition={{ duration: 0.3, ease: 'easeOut' }}
                         className="pt-8 pb-8 px-4 md:px-8 relative z-10"
                     >
                         <div className="max-w-[1600px] mx-auto">

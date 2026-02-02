@@ -150,7 +150,7 @@ export default function LoginPage() {
                             <Button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full h-14 mt-2 rounded-2xl font-black uppercase tracking-widest text-sm shadow-glow transition-all active:scale-95 group overflow-hidden"
+                                className="w-full h-14 mt-2 rounded-2xl font-black uppercase tracking-widest text-sm shadow-glow transition-all active:scale-95 group overflow-hidden relative z-20 touch-manipulation cursor-pointer"
                             >
                                 <span className="relative z-10 flex items-center justify-center gap-2">
                                     {isLoading ? (
@@ -178,7 +178,7 @@ export default function LoginPage() {
                                 variant="outline"
                                 onClick={handleGoogleLogin}
                                 disabled={isLoading}
-                                className="w-full h-14 rounded-2xl border-white/10 bg-white/5 text-white hover:bg-white/10 font-black uppercase tracking-widest text-xs transition-all active:scale-95 flex items-center justify-center gap-3"
+                                className="w-full h-14 rounded-2xl border-white/10 bg-white/5 text-white hover:bg-white/10 font-black uppercase tracking-widest text-xs transition-all active:scale-95 flex items-center justify-center gap-3 relative z-20 touch-manipulation cursor-pointer"
                             >
                                 <Chrome className="h-5 w-5 text-gray-400" />
                                 Google Authentication

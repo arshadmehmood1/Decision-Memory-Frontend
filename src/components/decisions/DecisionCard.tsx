@@ -154,12 +154,18 @@ export function DecisionCard({ decision }: DecisionCardProps) {
                             <div className={cn(
                                 "w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-[10px] sm:text-xs text-white font-black shadow-2xl transition-transform group-hover:scale-110",
                                 isCritical ? "bg-red-500/20 border border-red-500/30" : "bg-white/5 border border-white/10"
-                            )} title={isAnonymous ? 'Anonymous' : decision.madeBy}>
-                                {isAnonymous ? <EyeOff size={16} className="text-gray-500" /> : decision.madeBy.charAt(0)}
+                            )} title={isAnonymous ? 'Anonymous' : (typeof decision.madeBy === 'object' ? (decision.madeBy as any).name : decision.madeBy)}>
+                                {isAnonymous ? (
+                                    <EyeOff size={16} className="text-gray-500" />
+                                ) : (
+                                    (typeof decision.madeBy === 'object' ? (decision.madeBy as any).name?.charAt(0) : decision.madeBy?.charAt(0)) || '?'
+                                )}
                             </div>
                             <div className="block">
                                 <span className="text-[9px] sm:text-[10px] font-black text-gray-400 uppercase tracking-widest block">Logged By</span>
-                                <span className="text-[10px] sm:text-xs font-bold text-white whitespace-nowrap">{isAnonymous ? 'Anonymous' : decision.madeBy}</span>
+                                <span className="text-[10px] sm:text-xs font-bold text-white whitespace-nowrap">
+                                    {isAnonymous ? 'Anonymous' : (typeof decision.madeBy === 'object' ? (decision.madeBy as any).name : decision.madeBy)}
+                                </span>
                             </div>
                         </div>
                         <div className="flex items-center gap-4">
