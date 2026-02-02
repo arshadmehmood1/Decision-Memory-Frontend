@@ -428,7 +428,7 @@ export default function LandingPage() {
               </div>
               <div className="space-y-4 mb-10">
                 <ul className="space-y-4">
-                  {['Unlimited decision logs', 'AI blindspot analysis', 'Outcome tracking', 'Basic trace views'].map((feature) => (
+                  {['Up to 10 decision logs', 'AI blindspot analysis', 'Outcome tracking', 'Basic trace views'].map((feature) => (
                     <li key={feature} className="flex items-center gap-3 text-white font-bold">
                       <Check size={20} className="text-primary" />
                       {feature}
